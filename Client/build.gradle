@@ -1,0 +1,49 @@
+plugins {
+    id 'java'
+    id "com.github.johnrengelman.shadow" version "5.1.0"
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+//编译groovy代码时采用 UTF-8
+tasks.withType(GroovyCompile) {
+    groovyOptions.encoding = "UTF-8"
+}
+//编译JAVA文件时采用UTF-8
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+def spring_version = "4.3.27.RELEASE"
+List spring = [
+        "org.springframework:spring-core:$spring_version",
+//        "org.springframework:spring-beans:$spring_version",
+//        "org.springframework:spring-context:$spring_version",
+//        "org.springframework:spring-tx:$spring_version",
+]
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+    compile('org.fisco-bcos.java-sdk:fisco-bcos-java-sdk:2.7.2')
+    implementation 'org.jsoup:jsoup:1.13.1'
+    compile 'com.alibaba:fastjson:1.2.73'
+    implementation group: 'com.jcraft', name: 'jsch', version: '0.1.55'
+    implementation group: 'commons-codec', name: 'commons-codec', version: '1.15'
+
+    compile spring
+}
+shadowJar {
+    archiveBaseName.set('sBidBC')
+    archiveClassifier.set('')
+    archiveVersion.set('')
+    manifest {
+        attributes('Main-Class': 'org.sBid.MaskBid')
+    }
+}
+test {
+    useJUnitPlatform()
+}

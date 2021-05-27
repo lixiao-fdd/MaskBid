@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=1024, initial-scale=1.0">
+    <script src="./js/main.js"></script>
+    <link rel="stylesheet" href="./css/mian.css">
+    <link rel="preload" href="//at.alicdn.com/t/font_2558898_nx7ptvgtpso.woff2" as="font" type="font/woff2"
+        crossorigin="anonymous">
+    <title>MaskBid</title>
+</head>
+
+<body>
+    <div class="container">
+        <div class="loginTitleBox">
+            <h1>登录</h1>
+        </div>
+        <div class="loginContentBox">
+            <div class="loginLogoBox">
+                <img src="./resources/logo.png" alt="logo">
+            </div>
+            <div class="loginBox">
+                <div class="loginBoxTitleBox loginBoxTitleBoxBidder" id="loginBoxTitleBoxBidderID"
+                    onclick="switchToRole('1')">
+                    <div class="cover"></div>
+                    <span class="iconfont loginBoxIcon">&#xe99e;</span>
+                    <p class="loginBoxTitle">投标方</p>
+                </div>
+                <div class="loginBoxTitleBox loginBoxTitleBoxWait" id="loginBoxTitleBoxTenderID"
+                    onclick="switchToRole('0')">
+                    <div class="cover"></div>
+                    <span class="iconfont loginBoxIcon">&#xe683;</span>
+                    <p class="loginBoxTitle">招标方</p>
+                </div>
+                <div class="loginAccountBox">
+                    <h2 class="loginAccountTitle">已保存的用户</h2>
+                    <div class="loginAccountContainer loginAccountContainerScroll" id="loginAccountContainerID">
+
+                    </div>
+                    <div class="maskBox" id="registerBox" style="display: none;">
+                        <div class="cover"></div>
+                        <p>注册</p>
+                        <input type="text" placeholder="用户名" maxlength="50" id="newName">
+                        <button class="registerPost" onclick="postRegist()">提交</button>
+                        <button class="registerReturn" onclick="registReturn()">返回</button>
+                    </div>
+                    <div class="maskBox" id="uploadFileBox" style="display: none;">
+                        <div class="cover"></div>
+                        <p>导入用户密钥文件</p>
+                        <input type="text" placeholder="用户名" maxlength="50" id="skName">
+                        <input type="file" id="skFileInput">
+                        <button class="registerPost" onclick="postSk()">导入</button>
+                        <button class="registerReturn" onclick="UploadReturn()">返回</button>
+                    </div>
+                    <div class="maskBox" id="deleteBox" style="display: none;">
+                        <div class="cover"></div>
+                        <p>确认删除</p>
+                        <button class="registerPost" onclick="deleteAllAccount()">确认</button>
+                        <button class="registerReturn" onclick="closeDelete()">返回</button>
+                    </div>
+                    <div class="maskBox indexWait" id="waitAnima" style="display: none;">
+                        <div class="cover"></div>
+                        <div class="waitAnimation">
+                            <span class="iconfont">&#xe676;</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="loginAccountOperate" id="createAccount" onclick="startRegist()">创建新的用户</button>
+                <button class="loginAccountOperate" id="importAccount" onclick="startUpload()">导入用户密钥文件</button>
+                <button class="loginAccountOperate" id="deleteAccount" onclick="startDelete()">删除所有已保存的用户</button>
+            </div>
+        </div>
+    </div>
+    <script>window.onload = listAccount;</script>
+</body>
+
+</html>
