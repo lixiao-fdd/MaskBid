@@ -25,6 +25,8 @@ public class MaskBidServer {
     private SBidBC sBidBC;
     private String role;
     private String name;
+    private String bidCode;
+    private String tenderTableName;
 
     public MaskBidServer(int port) {
         this.port = port;
@@ -65,7 +67,7 @@ public class MaskBidServer {
 
     public String getRequest(InputStream clientInStream) {
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(clientInStream, StandardCharsets.UTF_8));
-        char[] buffer = new char[2048];
+        char[] buffer = new char[204800];
         try {
             bufferedReader.read(buffer);
         } catch (IOException e) {
@@ -113,8 +115,8 @@ public class MaskBidServer {
 
         // Show parameters
         System.out.println("=".repeat(20));
-        System.out.println("request:\n" + request);
-        System.out.println("\nurl: " + url);
+//        System.out.println("request:\n" + request);
+        System.out.println("url: " + url);
         System.out.println("method: " + method);
         System.out.println("params: " + params);
         System.out.println("filePath: " + filePath);
@@ -155,13 +157,13 @@ public class MaskBidServer {
                 }
             }
         } else if (method.compareTo("POST") == 0) {
-            int indexOfBody = request.indexOf("body: ");
+            int indexOfBody = request.indexOf("{");
             System.out.println("indexOfBody: " + indexOfBody);
             if (indexOfBody > 0) {
-                String bodyContent = request.substring(indexOfBody + 6);
-                System.out.println("body: " + bodyContent);
-                System.out.println("@".repeat(20));
+                String bodyContent = request.substring(indexOfBody);
                 JSONObject recvJson = JSONObject.parseObject(bodyContent);
+                System.out.println("body: " + recvJson.toString());
+                System.out.println("@".repeat(20));
                 fileContent = action(recvJson);
             } else {
                 JSONObject json = new JSONObject();
@@ -275,8 +277,6 @@ public class MaskBidServer {
                 json.put("bidName", Global.baseDecode(parameters.getBidName()));//招标名称
 
                 //报价状态
-                String status = (sBidBC.getRegistrationCounts() < parameters.getCounts().intValue()) ? "进行中" : "已结束";
-                json.put("status", status);
                 String index = sBidBC.getIndex(sBidBC.getRealName());
                 boolean registAlready = index.compareTo("-1") != 0;//todo 有问题
                 json.put("registAlready", registAlready);
@@ -284,6 +284,8 @@ public class MaskBidServer {
                     json.put("amount", sBidBC.getAmount());
                 }
                 json.put("finishAlready", sBidBC.getBidFinishStatus());
+                String status = (sBidBC.getBidFinishStatus()) ? "已结束" : "进行中";
+                json.put("status", status);
                 break;
             }
             //设置投标参数
@@ -291,15 +293,16 @@ public class MaskBidServer {
                 String name = recvJson.getString("name");
                 String amount = recvJson.getString("amount");
                 String tenderName = recvJson.getString("tenderName");
-                String bidCode = recvJson.getString("bidCode");
+                bidCode = recvJson.getString("bidCode");
                 System.out.println("name: " + name);
                 System.out.println("amount: " + amount);
                 System.out.println("tenderName: " + tenderName);
                 System.out.println("bidCode: " + bidCode);
-                String tenderTableName = "Tender_" + Global.sha1(tenderName + ":0");//招标机构在招标机构注册表中的名称
+                tenderTableName = "Tender_" + Global.sha1(tenderName + ":0");//招标机构在招标机构注册表中的名称
                 sBidBC.parametersRead(tenderTableName, bidCode);
                 sBidBC.setAmount(amount);
                 //链上注册
+                deleteTempDir();
                 StringBuilder status = new StringBuilder();
                 sBidBC.registration(status);
                 json.put("registResult", status);
@@ -308,10 +311,14 @@ public class MaskBidServer {
             }
             //刷新竞标信息
             case "refreshBidContent": {
+                sBidBC.parametersRead(tenderTableName, bidCode);
                 sBidBC.getRegistrationInfo(json);
+                json.put("registAlready", sBidBC.getIndex(sBidBC.getRealName()).compareTo("-1") != 0);
+                json.put("finishAlready", sBidBC.getBidFinishStatus());
+                System.out.println(json.toJSONString());
                 break;
             }
-            //刷新竞标信息
+            //重置竞标
             case "resetBidContent": {
                 sBidBC.withdrawRegistration();
                 break;
@@ -377,7 +384,8 @@ public class MaskBidServer {
 
             //重置所有
             case "GodModReset": {
-                sBidBC = new SBidBC("0号招标:0");
+                String tenderName = recvJson.getString("tenderNameReset");
+                sBidBC = new SBidBC(tenderName + ":0");
                 sBidBC.createAccount();
                 sBidBC.loadAccount();
                 sBidBC.allDel();
@@ -397,8 +405,8 @@ public class MaskBidServer {
     public boolean listAccounts(File dir, ArrayList<String> dirList) {
         if (dir.isDirectory()) {
             String[] children = dir.list();
-            for (int i = 0; i < children.length; i++) {
-                File temp = new File(dir, children[i]);
+            for (String child : children) {
+                File temp = new File(dir, child);
                 if (temp.exists() && temp.isDirectory() && temp.getName().contains("Files_")) {
                     String filePath = temp.getAbsolutePath() + File.separator + "name.txt";
                     StringBuilder realName = new StringBuilder();
@@ -408,6 +416,20 @@ public class MaskBidServer {
                     byte[] base64decodedBytes = Base64.getDecoder().decode(realName.toString().replace("\n", ""));
                     dirList.add(new String(base64decodedBytes));
                 }
+            }
+        }
+        return true;
+    }
+
+    public boolean deleteTempDir() {
+        File dir = new File(rootPath);
+        String[] children = dir.list();
+        for (String child : children) {
+            File temp = new File(dir, child);
+            if (temp.exists() && temp.isDirectory() && temp.getName().contains("files_")) {
+                String filePath = temp.getAbsolutePath();
+                boolean bol = FileUtils.deleteQuietly(temp);
+                System.out.println("Delete " + filePath + ": " + bol);
             }
         }
         return true;
@@ -426,5 +448,7 @@ public class MaskBidServer {
             }
         }
     }
+
+
 
 }

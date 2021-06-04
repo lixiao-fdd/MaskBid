@@ -38,10 +38,8 @@ inline void error_quit(const char* msg)
 }
 inline void change_path(const char* path)
 {
-	//printf("Leave %s Successed . . .\n", getcwd(NULL, 0));
 	if (chdir(path) == -1)
 		error_quit("chdir");
-	//printf("Entry %s Successed . . .\n", getcwd(NULL, 0));
 }
 inline void rm_dir(const char* path)
 {
@@ -65,11 +63,9 @@ inline void rm_dir(const char* path)
 		}
 		if (remove(dirp->d_name) == -1)
 			error_quit("remove");
-		//printf("rm %s Successed . . .\n", dirp->d_name);
 	}
 	closedir(dir);
 	change_path(p);
 	if (rmdir(path) == -1)
 		error_quit("rmdir");
-	//printf("rm %s Successed . . .\n", path);
 }

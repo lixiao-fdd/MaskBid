@@ -326,18 +326,17 @@ public class SBidBC {
         Table_SBid_Name = tender.getTable_sBid_name();
         Parameters bidTable = new Parameters(contract, Table_SBid_Name);
         int bidCounts = tender.getCounts();
-        ArrayList<JSONObject> BidTableList = new ArrayList<>();
         for (int i = 0; i < bidCounts; i++) {
             String bidCodeTemp = Global.sha1(Table_SBid_Name + (i + 1));
             bidTable.setName(bidCodeTemp);
             if (!bidTable.read()) {
                 continue;
             }
-            System.out.println("Reset register " + bidCodeTemp);
+            System.out.println("Reset register " + bidTable.getTable_register_name());
             for (int j = 1; j <= bidTable.getCounts().intValue(); j++) {
-                Register register = new Register(contract, bidTable.getTable_register_name(), String.valueOf(i), "");
+                Register register = new Register(contract, bidTable.getTable_register_name(), String.valueOf(j), "");
                 if (!register.delete())
-                    break;
+                    continue;
                 System.out.print("No." + j + " ");
             }
             System.out.println(" OK");
@@ -470,6 +469,7 @@ public class SBidBC {
     public void getRegistrationInfo(JSONObject json) {
         counts = parameters.getCounts().intValue();
         ArrayList<List<String>> info = new ArrayList<>();
+        System.out.println("getRegistrationInfo: " + parameters.getTable_register_name());
         for (int i = 0; i <= counts; i++) {
             Register register = new Register(contract, parameters.getTable_register_name(), String.valueOf(i), "");
             if (!register.read())
@@ -875,7 +875,7 @@ public class SBidBC {
         System.out.println("Amount: " + amount);
         Global.readResult(parameters.getCounts().intValue(), contract, parameters.getTable_register_name());
 //        System.out.println("\n" + clock.prettyPrint());
-
+        //todo: 删除临时文件夹
         return !loseFlag;
     }
 
@@ -1028,7 +1028,9 @@ public class SBidBC {
     }
 
     public boolean getBidFinishStatus() {
-        return parameters.getWinner().length() != 0;//winner项为空则竞标未结束，返回false
+        String winner = parameters.getWinner();
+        System.out.println("winner: " + winner);
+        return winner.length() > 0;//winner项为空则竞标未结束，返回false
     }
 
     public String getsBid_name() {
