@@ -6,8 +6,8 @@ org/sBid/Tender.java
  org.sBid.Tender
 org/sBid/Parameters.java
  org.sBid.Parameters
-org/sBid/FileToByteArrayHelper.java
- org.sBid.FileToByteArrayHelper
+org/sBid/MaskBid.java
+ org.sBid.MaskBid
 org/sBid/Account.java
  org.sBid.Account
 org/sBid/SBid.java
@@ -93,9 +93,9 @@ org/sBid/Communicate.java
  org.sBid.Communicate
 org/sBid/AmopResponseCB.java
  org.sBid.AmopResponseCB
+org/sBid/FileToByteArrayHelper.java
+ org.sBid.FileToByteArrayHelper
 org/sBid/SBidBC.java
  org.sBid.SBidBC
-org/sBid/MaskBid.java
- org.sBid.MaskBid
 org/sBid/MaskBidServer.java
  org.sBid.MaskBidServer

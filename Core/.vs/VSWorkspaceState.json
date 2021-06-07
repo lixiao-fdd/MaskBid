@@ -1,8 +1,12 @@
 {
   "ExpandedNodes": [
     "",
-    "\\src"
+    "\\src",
+    "\\src\\2cipherGen",
+    "\\src\\2compare",
+    "\\src\\2shuffle",
+    "\\src\\3sBid"
   ],
-  "SelectedNode": "\\src\\main.cpp",
+  "SelectedNode": "\\CMakeLists.txt",
   "PreviewInSolutionExplorer": false
 }

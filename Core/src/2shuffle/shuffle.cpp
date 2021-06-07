@@ -149,7 +149,7 @@ void Shuffle::readCipher(string fileName, vector<vector<Cipher_elg>*>* Cipher) {
 }
 //进行shuffle操作
 void Shuffle::shuffle() {
-	//clock_t tstart = GetTickCount();
+	clock_t cStart = GetTickCount();
 	R = new vector<vector<ZZ>*>(m);
 	pi = new vector<vector<vector<int>*>*>(m);
 	perm_matrix(pi);//生成用于shuffle的向量pi，内容为32个整数
@@ -166,6 +166,9 @@ void Shuffle::shuffle() {
 	stringstream ss;
 	reencryptCipher(ss);
 	ost.close();
+	clock_t cEnd = GetTickCount();
+	double cTime = (cEnd - cStart) / (double)CLOCKS_PER_SEC * 1000;
+	cout << "[" << codes[0] << "] - " << "shuffle " << cTime << " ms" << endl;
 	/*Functions::decryptCipher(c, num, 0);
 	Functions::decryptCipher(C, num, 1);*/
 	/*clock_t  tstop = GetTickCount();

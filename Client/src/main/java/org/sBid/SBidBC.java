@@ -196,7 +196,7 @@ public class SBidBC {
             }
             //String host = "192.168.1.121";
             String host = "127.0.0.1";
-            int port = 18000;
+            int port = 17000;
             Socket client = null;
             try {
                 Thread.sleep(500);
@@ -263,7 +263,7 @@ public class SBidBC {
         }
         //String host = "192.168.1.121";
         String host = "127.0.0.1";
-        int port = 18000;
+        int port = 17000;
         Socket client = null;
         try {
             Thread.sleep(500);
@@ -354,6 +354,7 @@ public class SBidBC {
         System.out.println("* BidCode: " + bidCode);
         System.out.println("*".repeat(30));
         this.sBid_name = bidCode;//本次招标在招标机构招标表中的名称
+        this.Table_SBid_Name = tenderTableName;
         parameters = new Parameters(contract, tenderTableName);
         parameters.setName(bidCode);
         if (!parameters.read()) {
@@ -373,8 +374,8 @@ public class SBidBC {
         if (counts <= 2) {
             totalRound = 1;
         } else {
-            totalRound = (int) Math.sqrt(counts);
-            if (Math.pow(totalRound, 2) != counts) {
+            totalRound = (int) (Math.log(counts) / Math.log(2));
+            if (Math.pow(2, totalRound) != counts) {
                 ++totalRound;
             }
         }
@@ -524,8 +525,8 @@ public class SBidBC {
         }
         //String host = "192.168.1.121";
         String host = "127.0.0.1";
-        int port = 18000;
-        port += Integer.parseInt(index) * 100;
+        int port = 17000;
+        port += Integer.parseInt(index);
         Socket client = null;
         try {
             Thread.sleep(500);
@@ -603,7 +604,8 @@ public class SBidBC {
                 continue;
             }
             System.out.println("Opponent: " + opponent.getIndex() + "_" + opponent.getName());
-            bigMe = index.compareTo(opponent.getIndex()) > 0;
+            bigMe = Integer.parseInt(index)>Integer.parseInt(opponent.getIndex());
+//            bigMe = index.compareTo(opponent.getIndex()) > 0;
 
             // Creat amop connect
             clock.start("Round " + Global.round + ": Connect peer");
@@ -656,9 +658,8 @@ public class SBidBC {
             }
             //connect core
             String host = "127.0.0.1";
-            int port = 18000;
-            port = 18000;
-            port += Integer.parseInt(index) * 100 + Global.round;
+            int port = 17000;
+            port += Integer.parseInt(index);
             Socket client = null;
             try {
                 Thread.sleep(500);
@@ -809,8 +810,6 @@ public class SBidBC {
                 e.printStackTrace();
             }
 //17.Update reesult
-            clock.stop();
-            clock.start("Round " + Global.round + ": Update reesult");
             fileNameSend = bidIndexFilesPath + "ans" + index + "-R" + Global.round + ".txt";
             publish.recvCoreFile(fileNameSend);
             fileList.add(fileNameSend);
@@ -827,7 +826,7 @@ public class SBidBC {
 //17.files upload
             //TODO: add signature
             clock.stop();
-            clock.start("Round " + Global.round + ": Files upload");
+            clock.start("Round " + Global.round + ": Upload");
             Files files = new Files(contract, register.getTable_files_name(), bidIndexFilesPath);
             StringBuilder fileZip = new StringBuilder();
             Global.zipFile(fileList, fileZip);
@@ -874,24 +873,33 @@ public class SBidBC {
         }
         System.out.println("Amount: " + amount);
         Global.readResult(parameters.getCounts().intValue(), contract, parameters.getTable_register_name());
-//        System.out.println("\n" + clock.prettyPrint());
-        //todo: 删除临时文件夹
+        System.out.println("\n" + clock.prettyPrint());
         return !loseFlag;
     }
 
     private void amop(String fileNameSend, String fileNameRecv) {
         if (bigMe) {
             //core recv and amop send
+            System.out.println("recvCoreFile: "+fileNameSend);
             publish.recvCoreFile(fileNameSend);
+            System.out.println("sendAmopFile: "+fileNameSend);
             publish.sendAmopFile(fileNameSend);
             //amop recv and core send
+            System.out.println("recvAmopFile: "+fileNameRecv);
             subscribe.recvAmopFile(fileNameRecv);
+            System.out.println("sendCoreFile: "+fileNameRecv);
             publish.sendCoreFile(fileNameRecv);
+            System.out.println("AMOP OK");
         } else {
+            System.out.println("recvAmopFile: "+fileNameRecv);
             subscribe.recvAmopFile(fileNameRecv);
+            System.out.println("sendCoreFile: "+fileNameRecv);
             publish.sendCoreFile(fileNameRecv);
+            System.out.println("recvCoreFile: "+fileNameSend);
             publish.recvCoreFile(fileNameSend);
+            System.out.println("sendAmopFile: "+fileNameSend);
             publish.sendAmopFile(fileNameSend);
+            System.out.println("AMOP OK");
         }
     }
 
@@ -911,6 +919,7 @@ public class SBidBC {
         createVerifyFileFolder();
         int lastFinishRoundVerify = 0;
         for (int round = 1; round <= totalRound; round++) {
+            System.out.println("Table_SBid_Name: " + Table_SBid_Name);
             String fileZipName = "fileZip_" + Table_SBid_Name + "_B" + sBid_name + "_I" + verifyIndex + "_R" + round + ".txt";//fileZip_招标机构名_招标名_Index_round.txt
             String sigFileName = "fileZip_" + Table_SBid_Name + "_B" + sBid_name + "_I" + verifyIndex + "_R" + round + ".sig";
 
@@ -958,8 +967,8 @@ public class SBidBC {
             }
             //String host = "192.168.1.121";
             String host = "127.0.0.1";
-            int port = 18000;
-            port += Integer.parseInt(verifyIndex) * 100 + round;
+            int port = 17000;
+            port += Integer.parseInt(verifyIndex);
             Socket client = null;
             try {
                 Thread.sleep(500);

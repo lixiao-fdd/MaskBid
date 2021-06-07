@@ -19,7 +19,7 @@ certPath = "conf"                           # The certification path
                                             # default load the GM SSL encryption privateKey from ${certPath}/gm/gmensdk.key
 
 [network]
-peers=["192.168.1.105:20200", "192.168.1.105:20201"]    # The peer list to connect
+peers=["127.0.0.1:20200", "127.0.0.1:20201"]    # The peer list to connect
 
 
 # AMOP configuration

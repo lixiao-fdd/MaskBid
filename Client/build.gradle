@@ -1,6 +1,8 @@
 plugins {
     id 'java'
     id "com.github.johnrengelman.shadow" version "5.1.0"
+    id 'org.springframework.boot' version '2.4.3'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 }
 
 group 'org.example'
@@ -17,13 +19,6 @@ tasks.withType(GroovyCompile) {
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
 }
-def spring_version = "4.3.27.RELEASE"
-List spring = [
-        "org.springframework:spring-core:$spring_version",
-//        "org.springframework:spring-beans:$spring_version",
-//        "org.springframework:spring-context:$spring_version",
-//        "org.springframework:spring-tx:$spring_version",
-]
 
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
@@ -34,7 +29,8 @@ dependencies {
     implementation group: 'com.jcraft', name: 'jsch', version: '0.1.55'
     implementation group: 'commons-codec', name: 'commons-codec', version: '1.15'
 
-    compile spring
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
 }
 shadowJar {
     archiveBaseName.set('sBidBC')

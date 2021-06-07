@@ -1,16 +1,13 @@
 package org.sBid;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+@SpringBootApplication
 public class MaskBid {
-    public static void main(String[] arg) {
+    public static void main(String[] args) {
         System.out.println("Start");
-        int port = 10899;
-        if (arg.length > 0)
-            port = Integer.parseInt(arg[0]);
-        MaskBidServer server = new MaskBidServer(port);
-        server.listen();
-        System.exit(0);
+        SpringApplication.run(MaskBid.class, args);
     }
-
 }

@@ -2,7 +2,7 @@
 
 //生成参数
 void SBid::parametersGen() {
-	int port = 18000;
+	int port = 17000;
 	net.start(port);
 	net.acceptConnect();
 	//创建文件夹
@@ -18,8 +18,8 @@ void SBid::parametersGen() {
 //生成密钥及密文用于链上注册
 void SBid::registration(string code) {
 	codes[0] = code;
-	int port = 18000;
-	port += stoi(codes[0]) * 100;
+	int port = 17000;
+	port += stoi(codes[0]);
 	cout << "[" << codes[0] << "] - port: " << port << endl;
 	net.start(port);
 	net.acceptConnect();
@@ -43,11 +43,8 @@ void SBid::prepare(array<int, 6> codes_in) {
 	strategyFlag = codes_in[5];
 	cout << "[" << codes[0] << "] - No." << codes[0] << " vs No." << codes[1] << " - Round: " << round << endl;
 
-	int port = 18000;
-	if (bigMe)
-		port += stoi(codes[0]) * 100 + stoi(round);
-	else
-		port += stoi(codes[0]) * 100 + stoi(round);
+	int port = 17000;
+	port += stoi(codes[0]);
 	cout << "[" << codes[0] << "] - port: " << port << endl;
 	net.start(port);
 	net.acceptConnect();
@@ -224,8 +221,10 @@ void SBid::pkExchange() {
 }
 //加密并生成证明
 void SBid::ciphertextOp() {
+	
 	CipherGen cipherGen(codes, round, bigMe);
 	cipherGen.gen(ciphertext, plaintext, ranZero, ran_1);//生成密文( h^r , g^m × y^r )
+
 	cipherGen.prove();//生成密文证明
 	cipherGen.proveConsistency(lastFinishRoundMe, lastFinishRoundOp);
 }
@@ -238,8 +237,10 @@ bool SBid::ciphertextVerify() {
 }
 //比较并生成证明
 void SBid::compareOp() {
+	
 	Compare compare(codes, round, plaintext, ciphertext, ran_1, ranZero, bigMe);
 	compare.compare();
+	
 	compare.prove();
 }
 //验证比较
@@ -253,9 +254,11 @@ bool SBid::compareVerify() {
 }
 //混淆并生成证明
 void SBid::shuffleOp() {
+	
 	Shuffle prover(codes, round);
 	prover.creatProver(bigMe);
 	prover.shuffle();
+	
 	prover.prove();
 }
 //验证混淆
@@ -332,11 +335,11 @@ bool SBid::decryptVerify() {
 }
 //解密密文
 void SBid::decrypt(array<string, 3> paras) {
-	int port = 18000;
+	int port = 17000;
 	cout << "[" << codes[0] << "] - port: " << port << endl;
 	net.start(port);
 	net.acceptConnect();
-
+	clock_t cStart = GetTickCount();
 	Cipher_elg cipher_amount;
 	stringstream ss;
 	ss << paras[0];//cipherAmount
@@ -368,6 +371,9 @@ void SBid::decrypt(array<string, 3> paras) {
 	ost.close();
 	net.fSend(fileName);
 	cout << "decrypt done" << endl;
+	clock_t cEnd = GetTickCount();
+	double cTime = (cEnd - cStart) / (double)CLOCKS_PER_SEC * 1000;
+	cout  << "decrypt " << cTime << " ms" << endl;
 }
 //接收证明文件压缩包并解压为独立的文件
 void SBid::unzip(array<string, 3> paras) {
@@ -375,8 +381,8 @@ void SBid::unzip(array<string, 3> paras) {
 	//codes[1] = paras[1];//对方的index
 	round = paras[1];//轮数
 	lastFinishRoundOp = paras[2];
-	int port = 18000;
-	port += stoi(codes[0]) * 100 + stoi(round);
+	int port = 17000;
+	port += stoi(codes[0]);
 	cout << "[" << codes[0] << "] - port: " << port << endl;
 	net.start(port);
 	net.acceptConnect();

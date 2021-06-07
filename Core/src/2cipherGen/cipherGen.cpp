@@ -70,6 +70,7 @@ void CipherGen::readPlaintext() {
 }
 //生成密文并读取对方生成的密文
 void CipherGen::createCipher() {
+	clock_t cStart = GetTickCount();
 	string fileName = filesPath + "ciphertext" + codes[0] + "-R" + round + ".txt";
 	ost.open(fileName, ios::out);
 	if (!ost) {
@@ -93,31 +94,28 @@ void CipherGen::createCipher() {
 	ost << ciphertextZero << endl;
 	ss << ciphertextZero << ";";
 	ost.close();
+
+	clock_t cEnd = GetTickCount();
+	double cTime = (cEnd - cStart) / (double)CLOCKS_PER_SEC * 1000;
+	cout << "[" << codes[0] << "] - " << "encryption " << cTime << " ms" << endl;
 	//读取对方生成的密文
 	string cipher;
 	//NOTE: 和java交互，先发送后接收
 	string fileName1 = filesPath + "ciphertext" + codes[1] + "-R" + round + ".txt";
+	cout << "cipherMe: " << fileName << endl;
+	cout << "cipherOp: " << fileName1 << endl;
 	if (bigMe) {
+		cout << "sending: " << fileName << endl;
 		net.fSend(fileName);
+		cout << "recving: " << fileName1 << endl;
 		net.fReceive(fileName1);
 	}
 	else {
+		cout << "recving: " << fileName1 << endl;
 		net.fReceive(fileName1);
+		cout << "sending: " << fileName << endl;
 		net.fSend(fileName);
 	}
-	/*
-	vector<string> ciphertext_2_str;
-	net.deserialization(cipher, ciphertext_2_str);
-	fileName = filesPath + "ciphertext" + codes[1] + "-R" + round + ".txt";
-	ost.open(fileName, ios::out);
-	if (!ost)
-	{
-		cout << "[" << codes[0] << "] - " << "Can't create " << fileName << endl;
-		exit(1);
-	}
-	for (int i = 0; i < ciphertext_2_str.size(); i++)
-		ost << ciphertext_2_str[i] << endl;
-	ost.close();*/
 	//保存随机数，下一轮生成密文一致性证明使用
 	fileName = filesPath + "ran" + codes[0] + "-R" + round + ".txt";
 	ost.open(fileName, ios::out);
@@ -129,6 +127,7 @@ void CipherGen::createCipher() {
 	for (int i = 0; i < ran_1.size(); i++)
 		ost << ran_1[i] << endl;
 	ost.close();
+	
 }
 //生成证明
 void CipherGen::prove() {
