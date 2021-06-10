@@ -1,395 +1,355 @@
-﻿<!DOCTYPE html>
-<html>
+<!DOCTYPE html>
+<html lang="zh-cn">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <title>MaskBid</title>
-  <link rel="stylesheet" href="./layui.css">
-  <link rel="stylesheet" href="./gobal.css">
-  <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
-  <script src="./gobal.js"></script>
-  <link rel="preload" href="//at.alicdn.com/t/font_2558898_nx7ptvgtpso.woff2" as="font" type="font/woff2"
-    crossorigin="anonymous">
+  <title>招标方主页 - MaskBid</title>
+  <link rel="stylesheet" href="./css/layui.css">
+  <link rel="stylesheet" href="./css/global.css">
 </head>
 
 <body>
+  <!-- 主体 -->
   <div class="layui-layout layui-layout-admin">
-
-    <!-- 头部区域-->
+    <!-- 头部区域 -->
     <div class="layui-header">
-      <div class="layui-logo layui-bg-black">MaskBid</div>
+      <div class="layui-logo layui-bg-black defaultCursor">MaskBid</div>
       <ul class="layui-nav layui-layout-right">
         <li class="layui-nav-item layui-show-md-inline-block">
-          <a>
-            <p class="layui-nav-name" id="mainAccountNameShow"></p>
-          </a>
+          <a id="mainTitleAccountName"></a>
           <dl class="layui-nav-child">
-            <dd><a onclick="switchPage(this)">用户信息</a></dd>
-            <dd><a onclick='window.location.replace("./");'>退出登录</a></dd>
+            <dd><a onclick="openAccountInfoLayer()">账户信息</a></dd>
+            <dd><a onclick="logout()">退出登录</a></dd>
           </dl>
         </li>
       </ul>
     </div>
 
-    <!-- 左侧导航区域-->
+    <!-- 左侧导航 -->
     <div class="layui-side layui-bg-black">
       <div class="layui-side-scroll">
-        <ul class="layui-nav layui-nav-tree layui-nav-child-c" lay-filter="test">
-          <li class="layui-nav-item layui-this" id="bidSide"><a onclick="switchPage(this)">招标</a></li>
-          <li class="layui-nav-item" id="auditSide"><a onclick="switchPage(this)">审计</a></li>
+        <ul class="layui-nav layui-nav-tree" lay-filter="test">
+          <li class="layui-nav-item"><a tabId="tenderBidAdmin" class="layui-this" onclick="switchPage(this)">标的管理</a>
+          </li>
+          <li class="layui-nav-item"><a tabId="tenderBidAudit" onclick="switchPage(this)">标的审计</a></li>
         </ul>
       </div>
     </div>
 
-    <!-- 主体区域-->
-    <div class="layui-body">
-      <div class="mainContent">
+    <!-- 内容主体区域 -->
+    <div class="layui-body" style="min-width: 900px;">
+      <div class="layui-tab-content">
+        <!-- 标的管理 -->
+        <div class="layui-tab-item layui-show" id="tenderBidAdmin">
+          <div class="layui-tab layui-tab-brief">
+            <ul class="layui-tab-title">
+              <li class="layui-this">发布标的</li>
+              <li onclick="loadTableBidWaiting()">等待中</li>
+              <li onclick="loadTableBidOngoing()">进行中</li>
+              <li onclick="loadTableBidFinished()">已结束</li>
+            </ul>
+            <div class="layui-tab-content">
+              <!-- 新的标的 -->
+              <div class="layui-tab-item layui-show">
+                <form class="layui-form layui-form-pane">
+                  <!-- 标的名称 -->
+                  <div class="layui-form-item">
+                    <label class="layui-form-label">标的名称</label>
+                    <div class="layui-input-block">
+                      <input type="text" placeholder="请输入标的名称" class="layui-input" name="newBidName"
+                        lay-verify="required|maxLengthName">
+                    </div>
+                  </div>
 
-        <!-- 招标 -->
-        <div class="bidBox" id="bidBoxID">
-          <div class="floatBidBox layui-hide" id="floatBidBoxID">
-            <!-- 新的招标 -->
-            <div class="layui-card layui-circle" id="bidModifyBox">
-              <div class="layui-card-header">
-                <h2>新的招标</h2>
-                <span class="iconfont layui-btn layui-btn-primary" onclick="closeNewBidBox()">&#xe668;</span>
+                  <!-- 标的发起时间、持续时间、持续时间单位和竞标人数 -->
+                  <div class="inlineInput">
+                    <!-- 标的发起时间 -->
+                    <div class="layui-inline inlineInputItem">
+                      <label class="layui-form-label">发起时间</label>
+                      <div class="layui-input-inline">
+                        <input type="text" placeholder="请输入发起时间" class="layui-input" name="newBidDataStart"
+                          id="newBidDateStart" lay-verify="required" autocomplete="off">
+                      </div>
+                    </div>
+
+                    <!-- 标的持续时间 -->
+                    <div class="layui-inline inlineInputItem inlineInputItemTime">
+                      <label class="layui-form-label">持续时间</label>
+                      <div class="layui-input-inline">
+                        <input type="number" placeholder="请输入持续时间" class="layui-input" name="newBidDuration"
+                          lay-verify="required|number|rangeDate" min=1 max=3600>
+                      </div>
+                    </div>
+
+                    <!-- 标的持续时间单位 -->
+                    <div class="layui-inline inlineInputItemUnit">
+                      <div class="layui-input-inline">
+                        <select name="newBidDurationUnit">
+                          <option value="minutes" selected>分钟</option>
+                          <option value="hours">小时</option>
+                          <option value="date">天</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <!-- 竞标人数 -->
+                    <div class="layui-inline inlineInputItem">
+                      <label class="layui-form-label">竞标人数</label>
+                      <div class="layui-input-inline">
+                        <input type="number" placeholder="请输入竞标人数" class="layui-input" name="newBidCounts" value="2"
+                          lay-verify="required|number|rangeCounts" min="2" max="2147483646">
+                      </div>
+                    </div>
+                  </div>
+                  <!-- 标的描述 -->
+                  <div class="layui-form-item layui-form-text">
+                    <label class="layui-form-label">标的描述</label>
+                    <div class="layui-input-block">
+                      <textarea placeholder="请输入标的描述" class="layui-textarea" name="newBidContent"
+                        lay-verify="maxLengthContent"></textarea>
+                    </div>
+                  </div>
+
+                  <div class="layui-form-item">
+                    <div class="layui-input-block" id="postBidButtons">
+                      <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                      <button class="layui-btn" lay-submit lay-filter="postBid">发布标的</button>
+                    </div>
+                  </div>
+                </form>
               </div>
-              <div class="layui-card-body">
+
+              <!-- 等待中的标的 -->
+              <div class="layui-tab-item">
+                <table id="tableBidWaiting" lay-filter="bidWaiting"></table>
+              </div>
+
+              <!-- 进行中的标的 -->
+              <div class="layui-tab-item">
+                <table id="tableBidOngoing" lay-filter="bidOngoing"></table>
+              </div>
+
+              <!-- 已完成的标的 -->
+              <div class="layui-tab-item">
+                <table id="tableBidFinished" lay-filter="bidFinished"></table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 标的审计 -->
+        <div class="layui-tab-item" id="tenderBidAudit">
+          <div class="layui-tab layui-tab-brief">
+            <ul class="layui-tab-title">
+              <li id="auditTabSearch" class="layui-this">标的检索</li>
+              <li id="auditTabResult" >审计结果</li>
+            </ul>
+            <div class="layui-tab-content">
+              <!-- 标的检索 -->
+              <div id="auditTabItemSearch" class="layui-tab-item layui-show">
+                <!-- 输入招标方名称 -->
+                <form class="layui-form layui-form-pane">
+                  <div class="layui-form-item auditSearch">
+                    <div class="layui-inline auditSearchInput">
+                      <label class="layui-form-label">招标方名称</label>
+                      <div class="layui-input-block">
+                        <input type="text" placeholder="请输入招标方名称" class="layui-input" name="auditTenderName"
+                          lay-verify="required|maxLengthName">
+                      </div>
+                    </div>
+                    <div class="layui-inline auditSearchButton">
+                      <button class="layui-btn" lay-submit lay-filter="auditSearchBid">检索</button>
+                    </div>
+                  </div>
+                </form>
+                <!-- 招标方标的列表 -->
+                <table id="tableAuditBidList" lay-filter="auditBidList"></table>
+              </div>
+
+              <!-- 审计结果 -->
+              <div id="auditTabItemResult" class="layui-tab-item">
+                <!-- 标的信息 -->
                 <table class="layui-table">
                   <colgroup>
-                    <col width="50%">
-                    <col width="50%">
+                    <col width="100">
+                    <col>
+                    <col width="100">
+                    <col width="100">
+                    <col width="100">
+                    <col width="100">
                   </colgroup>
                   <tbody>
                     <tr>
-                      <td class="table-out">
-                        <table class="layui-table">
-                          <colgroup>
-                            <col width="90px">
-                            <col>
-                          </colgroup>
-                          <tbody>
-                            <tr>
-                              <td class="tableKey">招标机构</td>
-                              <td class="tableValue" id="mianName"></td>
-                            </tr>
-                            <tr>
-                              <td class="tableKey">发布日期</td>
-                              <td class="tableValue">
-                                <input type="datetime-local" name="dateStartInput" required lay-verify="required"
-                                  autocomplete="off" class="layui-input" id="dateStartInput">
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </td>
-                      <td class="table-out">
-                        <table class="layui-table">
-                          <colgroup>
-                            <col width="90px">
-                            <col>
-                          </colgroup>
-                          <tbody>
-                            <tr>
-                              <td class="tableKey">竞标人数</td>
-                              <td class="tableValue">
-                                <input type="number" name="countsInput" required lay-verify="required"
-                                  placeholder="请输入竞标人数" autocomplete="off" class="layui-input" id="countsInput" min="2"
-                                  value="2">
-                              </td>
-                            </tr>
-                            <tr>
-                              <td class="tableKey">截止日期</td>
-                              <td class="tableValue">
-                                <input type="datetime-local" name="dateEndInput" required lay-verify="required"
-                                  autocomplete="off" class="layui-input" id="dateEndInput">
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </td>
+                      <td class="tableInfoKey">标的名称</td>
+                      <td class="tableInfoValue" id="auditInfoBidName" colspan="5"></td>
                     </tr>
                     <tr>
-                      <td colspan="2" class="table-out">
-                        <table class="layui-table">
-                          <colgroup>
-                            <col width="90px">
-                            <col>
-                          </colgroup>
-                          <tbody>
-                            <tr>
-                              <td>招标名称</td>
-                              <td class="tableValue">
-                                <input type="text" name="bidNameInput bidContentInput" required lay-verify="required"
-                                  placeholder="请输入招标名称" autocomplete="off" class="layui-input" id="bidNameInput"
-                                  maxlength="100">
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </td>
+                      <td class="tableInfoKey">标的内容</td>
+                      <td class="tableInfoValue" id="auditInfoBidContent" colspan="5"></td>
+                    </tr>
+                    <tr>
+                      <td class="tableInfoKey">标的编号</td>
+                      <td class="tableInfoValue" id="auditInfoBidCode"></td>
+                      <td class="tableInfoKey">投标人数</td>
+                      <td class="tableInfoValue tableValueCenter" id="auditInfoBidCounts"></td>
+                      <td class="tableInfoKey">审计结果</td>
+                      <td class="tableInfoValue tableValueCenter" id="auditInfoBidResult"></td>
                     </tr>
                   </tbody>
                 </table>
-                <button type="button" class="layui-btn layui-btn-fluid" onclick="createNewBid()">新建招标</button>
+                <!-- 标的投标表 -->
+                <table id="tableBidAuditRegInfo" lay-filter="bidAuditRegInfo"></table>
+                <!-- 审计日志框 -->
+                <form class="layui-form layui-form-pane layui-hide" id="auditLogBox">
+                  <div class="layui-form-item layui-form-text">
+                    <label class="layui-form-label">审计过程</label>
+                    <div class="layui-input-block">
+                      <textarea class="layui-textarea" readonly="readonly" id="auditLog" wrap="off"></textarea>
+                    </div>
+                  </div>
+                </form>
               </div>
-            </div>
-
-            <!-- 招标详细信息 -->
-            <div class="layui-card layui-circle" id="bidDetailBox">
-              <div class="layui-card-header">
-                <h2>招标信息</h2>
-                <span class="iconfont layui-btn layui-btn-primary" onclick="closeBidDetail()">&#xe668;</span>
-              </div>
-              <div class="layui-card-body">
-                <!-- 招标信息 -->
-                <table class="layui-table">
-                  <colgroup>
-                    <col width="50%">
-                    <col width="50%">
-                  </colgroup>
-                  <tbody>
-                    <tr>
-                      <td colspan="2" class="table-out">
-                        <table class="layui-table">
-                          <colgroup>
-                            <col width="90px">
-                            <col>
-                          </colgroup>
-                          <tbody>
-                            <tr>
-                              <td>招标名称</td>
-                              <td class="tableValue" id="bidName"></td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="table-out">
-                        <table class="layui-table">
-                          <colgroup>
-                            <col width="90px">
-                            <col>
-                          </colgroup>
-                          <tbody>
-                            <tr>
-                              <td class="tableKey">竞标人数</td>
-                              <td class="tableValue" id="counts"></td>
-                            </tr>
-                            <tr>
-                              <td class="tableKey">发布日期</td>
-                              <td class="tableValue" id="dateStart"></td>
-                            </tr>
-                            <tr>
-                              <td class="tableKey">报价状态</td>
-                              <td class="tableValue" id="status"></td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </td>
-                      <td class="table-out">
-                        <table class="layui-table">
-                          <colgroup>
-                            <col width="90px">
-                            <col>
-                          </colgroup>
-                          <tbody>
-                            <tr>
-                              <td class="tableKey">招标编号</td>
-                              <td class="tableValue" id="bidCode"></td>
-                            </tr>
-                            <tr>
-                              <td class="tableKey">截止日期</td>
-                              <td class="tableValue" id="dateEnd"></td>
-                            </tr>
-                            <tr>
-                              <td class="tableKey">中标金额</td>
-                              <td class="tableValue" id="tenderAmount"></td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </td>
-                    </tr>
-
-                  </tbody>
-                </table>
-                <!-- 注册信息 -->
-                <table class="layui-table">
-                  <colgroup>
-                    <col width="90px">
-                    <col width="500px">
-                    <col>
-                    <col width="100px">
-                  </colgroup>
-                  <thead>
-                    <tr>
-                      <th>编号</th>
-                      <th>投标机构名称</th>
-                      <th>投标机构公钥</th>
-                      <th>投标结果</th>
-                    </tr>
-                  </thead>
-                  <tbody id="bidInfoTableBody">
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <div class="fixCover layui-hide" id="bidBoxCoverID"></div>
-
-          <div class="fixBidBox" id="fixBidBoxID">
-            <!-- 已创建的招标 -->
-            <div class="layui-card layui-circle">
-              <div class="layui-card-header">
-                <h2>已创建的招标</h2>
-                <span class="iconfont layui-btn layui-btn-primary" onclick="showNewBidBox()">&#xe664;</span>
-              </div>
-              <div class="layui-card-body">
-                <table class="layui-table">
-                  <colgroup>
-                    <col width="90px">
-                    <col>
-                  </colgroup>
-                  <thead>
-                    <tr>
-                      <th>招标状态</th>
-                      <th class="tableAlignRight">投标名称</th>
-                    </tr>
-                  </thead>
-                  <tbody id="oldBidListTableBody">
-                  </tbody>
-                </table>
-              </div>
-
             </div>
           </div>
         </div>
-
-        <!-- 审计 -->
-        <div class="auditBox layui-hide" id="auditBoxID">
-          <div class="layui-card layui-circle" id="bidAuditBox">
-            <div class="layui-card-header">
-              <h2>审计</h2>
-            </div>
-            <div class="layui-card-body">
-              <!-- 搜索部分 -->
-              <div class="bidModifySearchBox">
-                <p>招标单位</p>
-                <input type="text" name="bidAccount" required lay-verify="required" placeholder="请输入招标单位"
-                  autocomplete="on" class="layui-input" id="bidAuditSearchUnitInput">
-                <div class="divide"></div>
-                <p>招标编号</p>
-                <input type="text" name="bidAccount" required lay-verify="required" placeholder="请输入招标编号"
-                  autocomplete="on" class="layui-input" id="bidAuditSearchCodeInput">
-                <div class="divide"></div>
-                <button type="button" class="layui-btn layui-btn-fluid layui-btn-primary" id="bidAuditSearchButton"
-                  onclick="loadRegList()">加载竞标</button>
-              </div>
-              <!-- 选择部分 -->
-              <div class="bidAuditSearchBox">
-                <table class="layui-table layui-hide" id="bidAuditSearchTable">
-                  <colgroup>
-                    <col width="50px">
-                    <col width="90px">
-                    <col width="200px">
-                    <col>
-                    <col width="100px">
-                    <col width="100px">
-                  </colgroup>
-                  <thead>
-                    <tr>
-                      <th>
-                        <input type="checkbox" class="bidListCheckbox" id="bidListCheckAll" onclick="checkAll()">
-                      </th>
-                      <th>编号</th>
-                      <th>投标机构名称</th>
-                      <th>投标机构公钥</th>
-                      <th>投标结果</th>
-                      <th>审计结果</th>
-                    </tr>
-                  </thead>
-                  <tbody id="bidListTableBody">
-                  </tbody>
-                </table>
-                <button type="button" class="layui-btn layui-btn-fluid layui-hide" id="bidAuditButton"
-                  onclick="startAudit()">审计</button>
-                </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 用户信息 -->
-        <div class="settingBox layui-hide" id="settingBoxID">
-          <div class="layui-card layui-circle" id="settingUserInfo">
-            <div class="layui-card-header">
-              <h2>用户信息</h2>
-            </div>
-            <div class="layui-card-body">
-              <table class="layui-table">
-                <colgroup>
-                  <col width="150">
-                  <col>
-                </colgroup>
-                <tbody>
-                  <tr>
-                    <td class="tableKey">用户名</td>
-                    <td class="tableValue tableAlignRight" id="accountInfoName"></td>
-                  </tr>
-                  <tr>
-                    <td class="tableKey">用户地址</td>
-                    <td class="tableValue tableAlignRight" id="accountInfoAddrress"></td>
-                  </tr>
-                  <tr>
-                    <td class="tableKey">公钥</td>
-                    <td class="tableValue tableAlignRight infoPK" id="accountInfoPK"></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
       </div>
     </div>
+  </div>
+  <!-- 弹出框 -->
+  <div>
+    <!-- 标的详细页弹出框 -->
+    <div id="bidDetail" class="bidDetailBox">
+      <div class="layui-card">
+        <div class="layui-card-header layerMove">标的信息</div>
+        <div class="layui-card-body">
+          <!-- 招标信息 -->
+          <table class="layui-table bidDetailInfo">
+            <colgroup>
+              <col width="50%">
+              <col width="50%">
+            </colgroup>
+            <tbody>
+              <tr>
+                <td colspan="2" class="tableOut">
+                  <table class="layui-table tableIn">
+                    <colgroup>
+                      <col width="90px">
+                      <col>
+                    </colgroup>
+                    <tbody>
+                      <tr>
+                        <td>招标名称</td>
+                        <td class="tableValue" id="bidName"></td>
+                      </tr>
+                      <tr>
+                        <td>招标内容</td>
+                        <td class="tableValue" id="bidContent"></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td class="tableOut">
+                  <table class="layui-table tableIn">
+                    <colgroup>
+                      <col width="90px">
+                      <col>
+                    </colgroup>
+                    <tbody>
+                      <tr>
+                        <td class="tableKey">竞标人数</td>
+                        <td class="tableValue" id="bidCounts"></td>
+                      </tr>
+                      <tr>
+                        <td class="tableKey">发布日期</td>
+                        <td class="tableValue" id="bidDateStart"></td>
+                      </tr>
+                      <tr>
+                        <td class="tableKey">报价状态</td>
+                        <td class="tableValue" id="bidStatus"></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+                <td class="tableOut">
+                  <table class="layui-table tableIn">
+                    <colgroup>
+                      <col width="90px">
+                      <col>
+                    </colgroup>
+                    <tbody>
+                      <tr>
+                        <td class="tableKey">招标编号</td>
+                        <td class="tableValue" id="bidCode"></td>
+                      </tr>
+                      <tr>
+                        <td class="tableKey">截止日期</td>
+                        <td class="tableValue" id="bidDateEnd"></td>
+                      </tr>
+                      <tr>
+                        <td class="tableKey">中标金额</td>
+                        <td class="tableValue" id="bidAmount"></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
 
-    <div class="layui-footer">
-      <!-- 底部固定区域 -->
-
+            </tbody>
+          </table>
+          <!-- 注册信息 -->
+          <table id="tableBidRegInfo" lay-filter="bidRegInfo"></table>
+        </div>
+      </div>
+    </div>
+    <!-- 用户信息弹出框 -->
+    <div id="accountInfo" class="accountInfoBox">
+      <div class="layui-card">
+        <div class="layui-card-header layerMove">用户信息</div>
+        <div class="layui-card-body">
+          <!-- 用户信息 -->
+          <table class="layui-table">
+            <colgroup>
+              <col width="100">
+              <col width="800">
+            </colgroup>
+            <tbody>
+              <tr>
+                <td class="tableInfoKey">用户名称</td>
+                <td class="tableInfoValue" id="accountInfoName"></td>
+              </tr>
+              <tr>
+                <td class="tableInfoKey">用户身份</td>
+                <td class="tableInfoValue" id="accountInfoRole"></td>
+              </tr>
+              <tr>
+                <td class="tableInfoKey">用户地址</td>
+                <td class="tableInfoValue" id="accountInfoAddress"></td>
+              </tr>
+              <tr>
+                <td class="tableInfoKey">用户公钥</td>
+                <td class="tableInfoValue" id="accountInfoPk"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
+
   <script src="./layui.js"></script>
+  <script src="./js/jquery.js"></script>
+  <script src="./js/global.js"></script>
   <script>
-    //JS 
     layui.use(['element', 'layer', 'util'], function () {
       var element = layui.element
         , layer = layui.layer
         , util = layui.util
         , $ = layui.$;
-
-      //头部事件
-      util.event('lay-header-event', {
-        //左侧菜单事件
-        menuLeft: function (othis) {
-          layer.msg('展开左侧菜单的操作', { icon: 0 });
-        }
-        , menuRight: function () {
-          layer.open({
-            type: 1
-            , content: '<div style="padding: 15px;">处理右侧面板的操作</div>'
-            , area: ['260px', '100%']
-            , offset: 'rt' //右上角
-            , anim: 5
-            , shadeClose: true
-          });
-        }
-      });
-
-
     });
-    window.onload = listAccountInfo;
+    window.onload = tenderStarter;
   </script>
 </body>
 

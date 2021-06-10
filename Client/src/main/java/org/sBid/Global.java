@@ -9,9 +9,9 @@ import org.fisco.bcos.sdk.crypto.signature.ECDSASignatureResult;
 import org.fisco.bcos.sdk.model.CryptoType;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class Global {
     public static List<String> waitAnim = List.of(" \\", " |", " /", " -");
@@ -26,7 +26,7 @@ public class Global {
     //read a file
     public static boolean readFile(String filePath, ArrayList<String> content) {
         File file = new File(filePath);
-        if(!file.exists())
+        if (!file.exists())
             return false;
         try {
             FileInputStream inputStream = new FileInputStream(file);
@@ -47,7 +47,7 @@ public class Global {
 
     public static boolean readFile(String filePath, StringBuilder content) {
         ArrayList<String> contentsList = new ArrayList<>();
-        if(!readFile(filePath, contentsList))
+        if (!readFile(filePath, contentsList))
             return false;
         int i = 0;
         for (; i < contentsList.size() - 1; i++)
@@ -112,7 +112,7 @@ public class Global {
         for (String fileUploadPath : fileList) {
             String fileUploadName = fileUploadPath.substring(fileUploadPath.lastIndexOf(File.separator) + 1);
             fileContent.setLength(0);
-            if(!Global.readFile(fileUploadPath, fileContent))
+            if (!Global.readFile(fileUploadPath, fileContent))
                 return false;
             fileZip.append(fileUploadName).append("#").append(fileContent).append("@");
         }
@@ -271,5 +271,34 @@ public class Global {
         CryptoSuite cryptoSuite = new CryptoSuite(CryptoType.ECDSA_TYPE);
         String hashData = cryptoSuite.hash(data);
         return cryptoSuite.verify(publicKey, hashData, signature);
+    }
+
+    //时间推算
+    public static String dateCaculate(String date, int duration, String unit) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy年MM月dd日 HH时mm分");
+        Date bidDateStart = new Date();
+        Calendar calendar = Calendar.getInstance();
+        try {
+            bidDateStart = sdf.parse(date);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        calendar.setTime(bidDateStart);
+        switch (unit) {
+            case "minutes" -> {
+                //加分钟
+                calendar.add(Calendar.MINUTE, duration);
+            }
+            case "hours" -> {
+                //加小时
+                calendar.add(Calendar.HOUR, duration);
+            }
+            case "date" -> {
+                //加天数
+                calendar.add(Calendar.DATE, duration);
+            }
+        }
+        Date bidDateEnd = calendar.getTime();
+        return sdf.format(bidDateEnd);
     }
 }

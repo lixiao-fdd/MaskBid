@@ -25,6 +25,7 @@ public class Account {
 
     private String address;
     private String pk;
+    private String sk;
     private final String contractAddress;
     private BcosSDK bcosSDK = null;
     private String rootPath = File.separator;
@@ -71,13 +72,14 @@ public class Account {
 
     public void createAccount() {
         //key file path
-        String pemAccountFilePath = filesPath + name + ".pem";
+//        String pemAccountFilePath = filesPath + name + ".pem";
         // 创建非国密类型的CryptoSuite
         CryptoSuite cryptoSuite = new CryptoSuite(CryptoType.ECDSA_TYPE);
         // 随机生成非国密公私钥对
         cryptoKeyPair = cryptoSuite.createKeyPair();
         // save keys
-        cryptoKeyPair.storeKeyPairWithPem(pemAccountFilePath);
+        sk = cryptoKeyPair.getHexPrivateKey();
+//        cryptoKeyPair.storeKeyPairWithPem(pemAccountFilePath);
         System.out.println("Account is created");
     }
 
@@ -93,6 +95,7 @@ public class Account {
             cryptoKeyPair = client.getCryptoSuite().getCryptoKeyPair();
             System.out.println("Account " + name + " is loaded");
         }
+
         this.pk = cryptoKeyPair.getHexPublicKey();
         this.address = cryptoKeyPair.getAddress();
         this.contract = SBid.load(contractAddress, client, cryptoKeyPair);//加载合约
@@ -100,9 +103,11 @@ public class Account {
     }
 
     public boolean loadAccount(String sk) {
-        //key file path
-        String pemAccountFilePath = filesPath + name + ".pem";
-        Global.writeFile(pemAccountFilePath, sk);
+        client.getCryptoSuite().createKeyPair(sk);
+        cryptoKeyPair = client.getCryptoSuite().getCryptoKeyPair();
+        this.pk = cryptoKeyPair.getHexPublicKey();
+        this.address = cryptoKeyPair.getAddress();
+        this.contract = SBid.load(contractAddress, client, cryptoKeyPair);//加载合约
         return true;
     }
 
@@ -141,6 +146,10 @@ public class Account {
 
     public String getPk() {
         return pk;
+    }
+
+    public String getSk() {
+        return sk;
     }
 
     public CryptoKeyPair getCryptoKeyPair() {

@@ -4,12 +4,12 @@ org/sBid/Global.java
  org.sBid.Global
 org/sBid/Tender.java
  org.sBid.Tender
-org/sBid/Parameters.java
- org.sBid.Parameters
 org/sBid/MaskBid.java
  org.sBid.MaskBid
-org/sBid/Account.java
- org.sBid.Account
+org/sBid/FileToByteArrayHelper.java
+ org.sBid.FileToByteArrayHelper
+org/sBid/Parameters.java
+ org.sBid.Parameters
 org/sBid/SBid.java
  org.sBid.SBid
  org.sBid.SBid$1
@@ -93,9 +93,9 @@ org/sBid/Communicate.java
  org.sBid.Communicate
 org/sBid/AmopResponseCB.java
  org.sBid.AmopResponseCB
-org/sBid/FileToByteArrayHelper.java
- org.sBid.FileToByteArrayHelper
 org/sBid/SBidBC.java
  org.sBid.SBidBC
+org/sBid/Account.java
+ org.sBid.Account
 org/sBid/MaskBidServer.java
  org.sBid.MaskBidServer

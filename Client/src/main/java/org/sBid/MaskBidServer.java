@@ -4,14 +4,22 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -29,10 +37,294 @@ public class MaskBidServer {
     private String name;
     private String bidCode;
     private String tenderTableName;
+    private String auditTenderName = "";
+    private String auditBidCode = "";
+    private int auditTestLogRound = 5;
+    private int auditTestRound = 0;
+    private String mbkPath;
+
+    //登录 上传密钥文件
+    @ResponseBody
+    @PostMapping("/signin")
+    public String signin(@RequestParam("file") MultipartFile file) {
+        JSONObject json = new JSONObject();
+        json.put("code", 0);
+        json.put("msg", "");
+        JSONObject data = new JSONObject();
+        if (file.isEmpty()) {
+            json.put("code", 1);
+            json.put("msg", "文件上传失败");
+        } else {
+            String fileName = file.getOriginalFilename();
+            data.put("fileName", fileName);
+            String filePath = "./" + fileName;
+            File dest = new File(filePath);
+            try {
+                FileUtils.copyInputStreamToFile(file.getInputStream(), dest);
+                if (!dest.exists()) {
+                    json.put("code", 2);
+                    json.put("msg", "文件转储失败");
+                } else {
+                    StringBuilder fileContent = new StringBuilder();
+                    Global.readFile(filePath, fileContent);
+                    System.out.println(dest.getAbsolutePath());
+                    sBidBC = new SBidBC(fileContent.toString(), data);
+                    if (dest.delete()) {
+                        System.out.println(dest.getAbsolutePath() + "删除成功");
+                    } else {
+                        System.out.println(dest.getAbsolutePath() + "删除失败");
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                json.put("code", 3);
+                json.put("msg", "文件处理失败");
+            }
+        }
+        json.put("data", data);
+        return json.toJSONString();
+    }
+
+    //注册
+    @ResponseBody
+    @GetMapping(value = "/signup")
+    public ResponseEntity<byte[]> fileDownload(@RequestParam("newAccountName") String newAccountName, @RequestParam("newAccountRole") String newAccountRole) throws IOException {
+        StringBuilder mbkFilePath = new StringBuilder();
+        sBidBC = new SBidBC(newAccountName, newAccountRole, mbkFilePath);
+        mbkPath = mbkFilePath.toString();
+        File file = new File(mbkPath);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(ContentDisposition.parse("attachement;filename=" + URLEncoder.encode(((newAccountRole.compareTo("0") == 0) ? "Tender" : "Bidder") + "_" + newAccountName + ".mbk", StandardCharsets.UTF_8)));
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        return new ResponseEntity<byte[]>(FileUtils.readFileToByteArray(file), headers, HttpStatus.OK);
+    }
+
+    //加载表格
+    @ResponseBody
+    @RequestMapping(value = "/table")
+    public String getTable(@RequestHeader(value = "tableType") String tableType) {
+        JSONObject json = new JSONObject();
+        json.put("code", 0);
+        json.put("msg", "");
+
+        switch (tableType) {
+            //等待开始的标的
+            case "BidWaiting" -> {
+                returnEmptyJson(json);
+            }
+            //进行中的标的
+            case "BidOngoing" -> {
+                Random random = new Random();
+                int count = 10;
+                ArrayList<JSONObject> dataList = new ArrayList<>();
+                for (int i = 0; i < count; i++) {
+                    JSONObject item = new JSONObject();
+                    int num = random.nextInt(100);
+                    item.put("bidName", "招标" + i + num);
+                    item.put("bidCode", Global.sha1("招标" + i + num));
+                    item.put("bidCounts", num);
+                    dataList.add(item);
+                }
+                json.put("count", count);
+                json.put("data", dataList);
+            }
+            //已完成的标的
+            case "BidFinished" -> {
+                returnEmptyJson(json);
+            }
+            //标的投标信息
+            case "BidRegInfo" -> {
+                Random random = new Random();
+                int count = 20;
+                ArrayList<JSONObject> dataList = new ArrayList<>();
+                for (int i = 0; i < count; i++) {
+                    JSONObject item = new JSONObject();
+                    int num = random.nextInt(64);
+                    item.put("bidderIndex", "No." + (i + 1));
+                    item.put("bidderName", "投标者" + num);
+                    item.put("bidderPk", Global.sha1("投标者" + num));
+                    item.put("bidderResults", "等待结果");
+                    dataList.add(item);
+                }
+                json.put("count", count);
+                json.put("data", dataList);
+            }
+            //审计标的对象的投标信息
+            case "BidAuditRegInfo" -> {
+                Random random = new Random();
+                int count = 4;
+                ArrayList<JSONObject> dataList = new ArrayList<>();
+                for (int i = 0; i < count; i++) {
+                    JSONObject item = new JSONObject();
+                    int num = random.nextInt(64);
+                    item.put("bidderIndex", "No." + (i + 1));
+                    item.put("bidderName", "投标者" + num);
+                    item.put("bidderPk", Global.sha1("投标者" + num));
+                    item.put("bidderResults", "投标结果");
+                    item.put("auditResults", "等待结束");
+                    dataList.add(item);
+                }
+                json.put("count", count);
+                json.put("data", dataList);
+            }
+            default -> {
+                json.replace("code", 1);
+                json.replace("msg", "unknown type: " + tableType);
+                json.put("count", 0);
+                json.put("data", "");
+            }
+        }
+        return json.toJSONString();
+    }
+
+    //加载指定招标方的标的列表
+    @ResponseBody
+    @RequestMapping(value = "/search")
+    public String searchTable(@RequestHeader(value = "tenderName") String tenderName) {
+        tenderName = URLDecoder.decode(tenderName, StandardCharsets.UTF_8);
+        //列出指定招标方的所有标的
+        JSONObject json = new JSONObject();
+        json.put("code", 0);
+        json.put("msg", "");
+        Random random = new Random();
+        int count = 10;
+        ArrayList<JSONObject> dataList = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            JSONObject item = new JSONObject();
+            int num = random.nextInt(100);
+            item.put("bidName", tenderName + "_Bid" + i);
+            item.put("bidCode", Global.sha1(tenderName + "_" + num));
+            item.put("bidCounts", num);
+            dataList.add(item);
+        }
+        json.put("count", count);
+        json.put("data", dataList);
+        return json.toJSONString();
+    }
+
+    //json请求
+    @ResponseBody
+    @RequestMapping(value = "/data", method = RequestMethod.POST, produces = "application/json")
+    public String resposeJson(@RequestBody JSONObject recvJson) {
+        String act = recvJson.getString("act");
+        JSONObject recvJsonData = recvJson.getJSONObject("data");
+        JSONObject json = new JSONObject();
+        json.put("act", act);
+        json.put("result", true);
+        JSONObject data = new JSONObject();
+        switch (act) {
+            //注册（新账户名称，身份）（新网页地址）
+            case "signup" -> {
+                String newAccountName = recvJsonData.getString("newAccountName");
+                String newAccountRole = recvJsonData.getString("newAccountRole");
+                StringBuilder mbkFilePath = new StringBuilder();
+                SBidBC sBidBC = new SBidBC(newAccountName, newAccountRole, mbkFilePath);
+                mbkPath = mbkFilePath.toString();
+                data.put("url", (newAccountRole.compareTo("0") == 0) ? "./tender.html" : "./bidder.html");
+            }
+            //退出登录（无输入）（无输出）
+            case "logout" -> {
+                sBidBC = null;
+            }
+            //加载账户信息（无输入）（账户名，账户地址，账户公钥）
+            case "listAccountInfo" -> {
+//                String fullNamebase64 = sBidBC.getRealName();
+//                String fullName = Global.baseDecode(fullNamebase64);
+//                json.put("name", fullName.substring(0, fullName.lastIndexOf(":")));
+//                json.put("address", sBidBC.getAccount().getAddress());
+//                json.put("pk", sBidBC.getAccount().getPk());
+//                json.put("role", sBidBC.getRole());
+                data.put("accountName", "accountName");
+                data.put("accountRole", "招标方");
+                data.put("accountAddress", "accountAddress");
+                data.put("accountPk", "accountPk");
+
+            }
+            //发布新的标的（标的名称，标的内容，标的开始时间，标的持续时间，标的持续时间单位，竞标人数）（标的编号）
+            case "postNewBid" -> {
+                String newBidName = recvJsonData.getString("newBidName");
+                int newBidDuration = recvJsonData.getIntValue("newBidDuration");
+                String newBidDurationUnit = recvJsonData.getString("newBidDurationUnit");
+                int newBidCounts = recvJsonData.getIntValue("newBidCounts");
+                String newBidContent = recvJsonData.getString("newBidContent");
+                String newBidDateStart = recvJsonData.getString("newBidDateStart");
+                String newBidDateEnd = Global.dateCaculate(newBidDateStart, newBidDuration, newBidDurationUnit);
+                data.put("bidDateStart", newBidDateStart);
+                data.put("bidDateEnd", newBidDateEnd);
+                data.put("bidCode", "bidCode");
+            }
+            //加载标的详细信息（招标者名称，标的编号）（标的名称，标的内容，标的编号，人数上限，开始时间，结束时间，标的状态，中标金额）
+            case "showBidDetail" -> {
+                String tenderName = recvJson.getJSONObject("data").getString("tenderName");
+                String bidCode = recvJson.getJSONObject("data").getString("bidCode");
+
+
+                data.put("bidCode", bidCode);
+
+                data.put("bidName", "bidName");
+                data.put("bidContent", "");
+                data.put("bidCounts", "bidCounts");
+                data.put("bidDateStart", "bidDateStart");
+                data.put("bidDateEnd", "bidDateEnd");
+                data.put("bidStatus", "bidStatus");
+                data.put("bidAmount", "bidAmount");
+            }
+            //准备审计（招标者名称，标的编号）（标的名称，标的内容，标的编号，投标人数，审计结果）
+            case "prepareAudit" -> {
+                auditTenderName = recvJson.getJSONObject("data").getString("tenderName");
+                auditBidCode = recvJson.getJSONObject("data").getString("bidCode");
+
+                Random random = new Random();
+                int num = random.nextInt(10);
+
+                data.put("auditInfoBidName", "auditInfoBidName");
+                data.put("auditInfoBidContent", "auditInfoBidContent");
+                data.put("auditInfoBidCode", "auditInfoBidCode");
+                data.put("auditInfoBidCounts", num);
+                data.put("auditInfoBidResult", "等待结束");
+            }
+            //开始审计（是否为开始审计）（审计是否结束，(如果结束)审计结果，日志）
+            case "startAudit" -> {
+                boolean auditStart = recvJson.getBooleanValue("auditStart");
+                if (auditStart) {
+                }
+                //开始审计
+                //fake
+                StringBuilder stringBuilder = new StringBuilder();
+                if (auditTestRound++ < auditTestLogRound) {
+                    Random random = new Random();
+                    int num = random.nextInt(10);
+                    for (int i = 0; i < num; i++) {
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                        Date date = new Date();
+                        stringBuilder.append(sdf.format(date)).append(" INFO ").append(random.nextInt(1000)).append(" --- Everything ok.").append("\n");
+                        try {
+                            Thread.sleep(random.nextInt(100));
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    data.put("finishStatus", false);
+                } else {
+                    data.put("auditResult", true);//应为数组
+                    data.put("finishStatus", true);
+                    auditTestRound = 0;
+                }
+                data.put("log", stringBuilder);
+
+            }
+            default -> {
+                System.err.println("unknown act: " + act);
+                json.replace("result", false);
+            }
+        }
+        json.put("data", data);
+        return json.toJSONString();
+    }
 
     @ResponseBody
     @RequestMapping(value = "/json", method = RequestMethod.POST, produces = "application/json")
-    public String GodModReset(@RequestBody JSONObject recvJson) {
+    public String respose(@RequestBody JSONObject recvJson) {
         System.out.println("recv");
         File directory = new File("");
         try {
@@ -300,4 +592,10 @@ public class MaskBidServer {
         }
     }
 
+    public void returnEmptyJson(JSONObject json) {
+        int count = 0;
+        ArrayList<JSONObject> dataList = new ArrayList<>();
+        json.put("count", count);
+        json.put("data", dataList);
+    }
 }

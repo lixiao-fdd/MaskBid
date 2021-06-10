@@ -2,6 +2,7 @@ package org.sBid;
 
 import com.alibaba.fastjson.JSONObject;
 import org.springframework.util.StopWatch;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,9 +17,9 @@ import java.util.*;
 
 
 public class SBidBC {
-    private final String accountName;
-    private final String realName;
-    private final String role;
+    private String accountName;
+    private String realName;
+    private String role;
     private String amount;
     private String index;
     private int counts = 2;
@@ -53,6 +54,38 @@ public class SBidBC {
         }
     }
 
+    public SBidBC(String newAccountName, String newAccountRole, StringBuilder mbkFilePath) {
+        role = newAccountRole;
+        this.accountName = Global.sha1(newAccountName);
+        this.realName = Base64.getEncoder().encodeToString(newAccountName.getBytes(StandardCharsets.UTF_8));
+        if (role.compareTo("0") == 0) {//招标者的招标表名
+            Table_SBid_Name = "Tender_" + this.accountName;
+        }
+//        String accountSk = createAccount();
+        String accountSk = "tempSKtempSKtempSKtempSKtempSKtempSKtempSKtempSKtempSKtempSK";
+        String mbkFile = Base64.getEncoder().encodeToString((newAccountName + ":" + newAccountRole + "-" + accountSk).getBytes(StandardCharsets.UTF_8));
+//        mbkFilePath.append(account.getFilesPath()).append("login.mbk");
+        mbkFilePath.append("./").append("login.mbk");
+        Global.writeFile(mbkFilePath.toString(), mbkFile);
+    }
+
+    public SBidBC(String fileContentBase64, JSONObject data) {
+        String fileContent = Global.baseDecode(fileContentBase64);
+        String accountName = fileContent.substring(0, fileContent.lastIndexOf(":"));
+        String temp = fileContent.substring(fileContent.lastIndexOf(":") + 1);
+        String accountRole = temp.substring(0, temp.lastIndexOf("-"));
+        String accountSK = temp.substring(temp.lastIndexOf("-") + 1);
+
+        this.accountName = Global.sha1(accountName);
+        this.realName = Base64.getEncoder().encodeToString(accountName.getBytes(StandardCharsets.UTF_8));
+        this.role=accountRole;
+
+//        data.put("loginResult", loadAccount(accountSK));
+
+        data.put("accountRole", accountRole);
+        data.put("loginResult", true);
+    }
+
     /*竞拍者流程：
      * 1、启动软件，登录，读取账号
      * 2、连接节点
@@ -65,16 +98,15 @@ public class SBidBC {
      * */
 
     //创建账号
-    public void createAccount() {
-        //软件启动时及切换用户时调用
+    public String createAccount() {
         account = new Account(accountName, contractAddress);
         account.createAccount();
-        Global.writeFile(account.getFilesPath() + "name.txt", realName);
+//        Global.writeFile(account.getFilesPath() + "name.txt", realName);
+        return account.getSk();
     }
 
     //加载账号
     public boolean loadAccount() {
-        //软件启动时及切换用户时调用
         account = new Account(accountName, contractAddress);
         System.out.println("Node is connecting\r");
         if (!account.connect()) {
@@ -101,7 +133,6 @@ public class SBidBC {
             System.err.println("LoadAccount failed");
             return false;
         }
-        Global.writeFile(account.getFilesPath() + "name.txt", realName);
         return true;
     }
 
@@ -604,7 +635,7 @@ public class SBidBC {
                 continue;
             }
             System.out.println("Opponent: " + opponent.getIndex() + "_" + opponent.getName());
-            bigMe = Integer.parseInt(index)>Integer.parseInt(opponent.getIndex());
+            bigMe = Integer.parseInt(index) > Integer.parseInt(opponent.getIndex());
 //            bigMe = index.compareTo(opponent.getIndex()) > 0;
 
             // Creat amop connect
@@ -880,24 +911,24 @@ public class SBidBC {
     private void amop(String fileNameSend, String fileNameRecv) {
         if (bigMe) {
             //core recv and amop send
-            System.out.println("recvCoreFile: "+fileNameSend);
+            System.out.println("recvCoreFile: " + fileNameSend);
             publish.recvCoreFile(fileNameSend);
-            System.out.println("sendAmopFile: "+fileNameSend);
+            System.out.println("sendAmopFile: " + fileNameSend);
             publish.sendAmopFile(fileNameSend);
             //amop recv and core send
-            System.out.println("recvAmopFile: "+fileNameRecv);
+            System.out.println("recvAmopFile: " + fileNameRecv);
             subscribe.recvAmopFile(fileNameRecv);
-            System.out.println("sendCoreFile: "+fileNameRecv);
+            System.out.println("sendCoreFile: " + fileNameRecv);
             publish.sendCoreFile(fileNameRecv);
             System.out.println("AMOP OK");
         } else {
-            System.out.println("recvAmopFile: "+fileNameRecv);
+            System.out.println("recvAmopFile: " + fileNameRecv);
             subscribe.recvAmopFile(fileNameRecv);
-            System.out.println("sendCoreFile: "+fileNameRecv);
+            System.out.println("sendCoreFile: " + fileNameRecv);
             publish.sendCoreFile(fileNameRecv);
-            System.out.println("recvCoreFile: "+fileNameSend);
+            System.out.println("recvCoreFile: " + fileNameSend);
             publish.recvCoreFile(fileNameSend);
-            System.out.println("sendAmopFile: "+fileNameSend);
+            System.out.println("sendAmopFile: " + fileNameSend);
             publish.sendAmopFile(fileNameSend);
             System.out.println("AMOP OK");
         }
