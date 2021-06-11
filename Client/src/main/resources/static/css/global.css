@@ -58,6 +58,28 @@ a {
     justify-content: space-between;
     align-items: center;
     position: relative;
+    min-width: 900px;
+    min-height: 400px;
+}
+
+i#loginSettingButton {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    font-size: 30px;
+    color: #db261c;
+    cursor: pointer;
+    height: 30px;
+    width: 30px;
+    text-align: center;
+    transform: rotate( 0deg);
+    transition: all 0.4s ease-in-out;
+    line-height: 30px;
+}
+
+i#loginSettingButton:hover {
+    transform: rotate(180deg);
+    transition: all 0.4s ease-in-out;
 }
 
 .content::before {
@@ -227,16 +249,19 @@ button#signup {
     margin-top: 0;
 }
 
-.signupAccountName{
+.signupAccountName {
     margin-bottom: 0;
 }
+
 .layui-form-radio:hover *, .layui-form-radioed, .layui-form-radioed>i {
     color: #db261c;
 }
+
 .layui-unselect.layui-form-radio {
     margin: 10px 15px;
     padding-right: 0;
 }
+
 /* tender */
 
 .layui-body>.layui-tab-content {
@@ -292,6 +317,15 @@ ul.layui-tab-title {
     text-align: right;
 }
 
+.layui-nav-tree .layui-nav-item a {
+    height: 50px;
+}
+
+.loginSettingPostButton button {
+    float: right;
+    width: 100px;
+}
+
 .layui-inline.inlineInputItem {
     width: 365px;
     margin-bottom: 15px;
@@ -315,11 +349,11 @@ ul.layui-tab-title {
     margin-bottom: 15px;
 }
 
-.bidDetailBox, .accountInfoBox {
+.bidDetailBox, .accountInfoBox, .loginSettingBox {
     display: none!important;
 }
 
-.bidDetailBox.layui-layer-wrap, .accountInfoBox.layui-layer-wrap {
+.bidDetailBox.layui-layer-wrap, .accountInfoBox.layui-layer-wrap, .loginSettingBox.layui-layer-wrap {
     display: block!important;
 }
 
@@ -416,4 +450,10 @@ textarea#auditLog::-webkit-scrollbar-thumb {
 
 textarea#auditLog::-webkit-scrollbar-corner {
     background-color: #282c34;
+}
+.bidPostForm{
+    margin-top: 20px;
+}
+.bidPostFormButton {
+    text-align: right;
 }

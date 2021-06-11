@@ -91,6 +91,7 @@ public class MaskBidServer {
     public ResponseEntity<byte[]> fileDownload(@RequestParam("newAccountName") String newAccountName, @RequestParam("newAccountRole") String newAccountRole) throws IOException {
         StringBuilder mbkFilePath = new StringBuilder();
         sBidBC = new SBidBC(newAccountName, newAccountRole, mbkFilePath);
+//todo: 同名就不可以加入了
         mbkPath = mbkFilePath.toString();
         File file = new File(mbkPath);
         HttpHeaders headers = new HttpHeaders();
@@ -108,14 +109,26 @@ public class MaskBidServer {
         json.put("msg", "");
 
         switch (tableType) {
-            //等待开始的标的
-            case "BidWaiting" -> {
-                returnEmptyJson(json);
-            }
             //进行中的标的
             case "BidOngoing" -> {
                 Random random = new Random();
-                int count = 10;
+                int count = 5;
+                ArrayList<JSONObject> dataList = new ArrayList<>();
+                for (int i = 0; i < count; i++) {
+                    JSONObject item = new JSONObject();
+                    int num = random.nextInt(100);
+                    item.put("bidName", "招标" + i + num);
+                    item.put("bidCode", Global.sha1("招标" + i + num));
+                    item.put("bidDate", "2021年07月1" + (random.nextInt(8) + 1) + "日 14时0分");
+                    dataList.add(item);
+                }
+                json.put("count", count);
+                json.put("data", dataList);
+            }
+            //已完成的标的
+            case "BidFinished" -> {
+                Random random = new Random();
+                int count = 30;
                 ArrayList<JSONObject> dataList = new ArrayList<>();
                 for (int i = 0; i < count; i++) {
                     JSONObject item = new JSONObject();
@@ -128,9 +141,42 @@ public class MaskBidServer {
                 json.put("count", count);
                 json.put("data", dataList);
             }
-            //已完成的标的
-            case "BidFinished" -> {
-                returnEmptyJson(json);
+            //投标者进行中的标的
+            case "bidderBidOngoing" -> {
+                Random random = new Random();
+                int count = 5;
+                ArrayList<JSONObject> dataList = new ArrayList<>();
+                for (int i = 0; i < count; i++) {
+                    JSONObject item = new JSONObject();
+                    int num = random.nextInt(100);
+                    item.put("tenderName", "招标者" + i);
+                    item.put("bidName", "招标" + i + num);
+                    item.put("bidCode", Global.sha1("招标" + i + num));
+                    item.put("bidDate", "2021年07月1" + (random.nextInt(8) + 1) + "日 14时0分");
+                    item.put("bidAmount", num * 791);
+
+                    dataList.add(item);
+                }
+                json.put("count", count);
+                json.put("data", dataList);
+            }
+            //投标者已完成的标的
+            case "bidderBidFinish" -> {
+                Random random = new Random();
+                int count = 10;
+                ArrayList<JSONObject> dataList = new ArrayList<>();
+                for (int i = 0; i < count; i++) {
+                    JSONObject item = new JSONObject();
+                    int num = random.nextInt(100);
+                    item.put("tenderName", "招标者" + i);
+                    item.put("bidName", "招标" + i + num);
+                    item.put("bidCode", Global.sha1("招标" + i + num));
+                    item.put("bidCounts", num);
+                    item.put("bidResult", "失败");
+                    dataList.add(item);
+                }
+                json.put("count", count);
+                json.put("data", dataList);
             }
             //标的投标信息
             case "BidRegInfo" -> {
@@ -177,10 +223,35 @@ public class MaskBidServer {
         return json.toJSONString();
     }
 
-    //加载指定招标方的标的列表
+    //加载指定招标方已完成的标的列表
     @ResponseBody
-    @RequestMapping(value = "/search")
-    public String searchTable(@RequestHeader(value = "tenderName") String tenderName) {
+    @RequestMapping(value = "/searchFinish")
+    public String searchTableFinish(@RequestHeader(value = "tenderName") String tenderName) {
+        tenderName = URLDecoder.decode(tenderName, StandardCharsets.UTF_8);
+        //列出指定招标方的所有标的
+        JSONObject json = new JSONObject();
+        json.put("code", 0);
+        json.put("msg", "");
+        Random random = new Random();
+        int count = 10;
+        ArrayList<JSONObject> dataList = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            JSONObject item = new JSONObject();
+            int num = random.nextInt(100);
+            item.put("bidName", tenderName + "_Bid" + i);
+            item.put("bidCode", Global.sha1(tenderName + "_" + num));
+            item.put("bidCounts", num);
+            dataList.add(item);
+        }
+        json.put("count", count);
+        json.put("data", dataList);
+        return json.toJSONString();
+    }
+
+    //加载指定招标方进行中的标的列表
+    @ResponseBody
+    @RequestMapping(value = "/searchOngoing")
+    public String searchTableOngoing(@RequestHeader(value = "tenderName") String tenderName) {
         tenderName = URLDecoder.decode(tenderName, StandardCharsets.UTF_8);
         //列出指定招标方的所有标的
         JSONObject json = new JSONObject();
@@ -213,6 +284,14 @@ public class MaskBidServer {
         json.put("result", true);
         JSONObject data = new JSONObject();
         switch (act) {
+            //判断是否已经登陆
+            case "cookies" ->{
+                if(sBidBC!=null){
+                    json.put("code", 0);
+                    data.put("accountRole",sBidBC.getRole());
+                }else
+                    json.put("code", 1);
+            }
             //注册（新账户名称，身份）（新网页地址）
             case "signup" -> {
                 String newAccountName = recvJsonData.getString("newAccountName");
@@ -240,23 +319,22 @@ public class MaskBidServer {
                 data.put("accountPk", "accountPk");
 
             }
-            //发布新的标的（标的名称，标的内容，标的开始时间，标的持续时间，标的持续时间单位，竞标人数）（标的编号）
+            //发布新的标的（标的名称，标的内容，标的开始时间，标的持续时间，标的持续时间单位）（标的编号）
             case "postNewBid" -> {
                 String newBidName = recvJsonData.getString("newBidName");
                 int newBidDuration = recvJsonData.getIntValue("newBidDuration");
                 String newBidDurationUnit = recvJsonData.getString("newBidDurationUnit");
-                int newBidCounts = recvJsonData.getIntValue("newBidCounts");
                 String newBidContent = recvJsonData.getString("newBidContent");
                 String newBidDateStart = recvJsonData.getString("newBidDateStart");
                 String newBidDateEnd = Global.dateCaculate(newBidDateStart, newBidDuration, newBidDurationUnit);
+
                 data.put("bidDateStart", newBidDateStart);
-                data.put("bidDateEnd", newBidDateEnd);
                 data.put("bidCode", "bidCode");
             }
             //加载标的详细信息（招标者名称，标的编号）（标的名称，标的内容，标的编号，人数上限，开始时间，结束时间，标的状态，中标金额）
             case "showBidDetail" -> {
-                String tenderName = recvJson.getJSONObject("data").getString("tenderName");
-                String bidCode = recvJson.getJSONObject("data").getString("bidCode");
+                String tenderName = recvJsonData.getString("tenderName");
+                String bidCode = recvJsonData.getString("bidCode");
 
 
                 data.put("bidCode", bidCode);
@@ -268,6 +346,38 @@ public class MaskBidServer {
                 data.put("bidDateEnd", "bidDateEnd");
                 data.put("bidStatus", "bidStatus");
                 data.put("bidAmount", "bidAmount");
+            }
+            //加载标的（招标者名称，标的编号）（招标者名称，标的名称，标的内容，标的编号，开始时间，结束时间）
+            case "loadBid" -> {
+                String bidTenderName = recvJsonData.getString("tenderName");
+                String bidBidCode = recvJsonData.getString("bidCode");
+                data.put("bidInfoTenderName", bidTenderName);
+                data.put("bidInfoBidCode", bidBidCode);
+
+                Random random = new Random();
+                int num = random.nextInt(10);
+
+                data.put("bidInfoBidName", "bidInfoBidName");
+                data.put("bidInfoBidDateStart", "bidInfoBidDateStart");
+                data.put("bidInfoBidDateEnd", "bidInfoBidDateEnd");
+                data.put("bidInfoBidContent", "bidInfoBidContent");
+            }
+            //发布投标金额（招标者名称，标的编号，投标金额）（投标结果）
+            case "postBidAmount" ->{
+                String bidTenderName = recvJsonData.getString("tenderName");
+                String bidBidCode = recvJsonData.getString("bidCode");
+                String bidAmount = recvJsonData.getString("bidAmount");
+
+                data.put("postBidStatus", true);
+            }
+           //准备投标（招标者名称，标的编号）（招标者名称，标的编号，竞标结果）
+            case "prepareBid" ->{
+                String bidTenderName = recvJsonData.getString("tenderName");
+                String bidBidCode = recvJsonData.getString("bidCode");
+
+                data.put("bidTenderName", bidTenderName);
+                data.put("bidBidCode", bidBidCode);
+                data.put("bidResult", true);
             }
             //准备审计（招标者名称，标的编号）（标的名称，标的内容，标的编号，投标人数，审计结果）
             case "prepareAudit" -> {

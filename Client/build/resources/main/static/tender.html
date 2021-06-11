@@ -44,15 +44,14 @@
         <div class="layui-tab-item layui-show" id="tenderBidAdmin">
           <div class="layui-tab layui-tab-brief">
             <ul class="layui-tab-title">
-              <li class="layui-this">发布标的</li>
-              <li onclick="loadTableBidWaiting()">等待中</li>
-              <li onclick="loadTableBidOngoing()">进行中</li>
-              <li onclick="loadTableBidFinished()">已结束</li>
+              <li id="tableBidPostTab" class="layui-this">发布标的</li>
+              <li id="tableBidOngoingTab" onclick="loadTableBidOngoing()">进行中</li>
+              <li id="tableBidFinishedTab" onclick="loadTableBidFinished()">已结束</li>
             </ul>
             <div class="layui-tab-content">
               <!-- 新的标的 -->
-              <div class="layui-tab-item layui-show">
-                <form class="layui-form layui-form-pane">
+              <div id="tableBidPostItem" class="layui-tab-item layui-show">
+                <form class="layui-form layui-form-pane" id="postBidForm">
                   <!-- 标的名称 -->
                   <div class="layui-form-item">
                     <label class="layui-form-label">标的名称</label>
@@ -93,14 +92,6 @@
                       </div>
                     </div>
 
-                    <!-- 竞标人数 -->
-                    <div class="layui-inline inlineInputItem">
-                      <label class="layui-form-label">竞标人数</label>
-                      <div class="layui-input-inline">
-                        <input type="number" placeholder="请输入竞标人数" class="layui-input" name="newBidCounts" value="2"
-                          lay-verify="required|number|rangeCounts" min="2" max="2147483646">
-                      </div>
-                    </div>
                   </div>
                   <!-- 标的描述 -->
                   <div class="layui-form-item layui-form-text">
@@ -113,25 +104,20 @@
 
                   <div class="layui-form-item">
                     <div class="layui-input-block" id="postBidButtons">
-                      <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                      <button id="postBidResetButton" type="reset" class="layui-btn layui-btn-primary">重置</button>
                       <button class="layui-btn" lay-submit lay-filter="postBid">发布标的</button>
                     </div>
                   </div>
                 </form>
               </div>
 
-              <!-- 等待中的标的 -->
-              <div class="layui-tab-item">
-                <table id="tableBidWaiting" lay-filter="bidWaiting"></table>
-              </div>
-
               <!-- 进行中的标的 -->
-              <div class="layui-tab-item">
+              <div id="tableBidOngoingItem" class="layui-tab-item">
                 <table id="tableBidOngoing" lay-filter="bidOngoing"></table>
               </div>
 
               <!-- 已完成的标的 -->
-              <div class="layui-tab-item">
+              <div id="tableBidFinishedItem" class="layui-tab-item">
                 <table id="tableBidFinished" lay-filter="bidFinished"></table>
               </div>
             </div>
@@ -143,7 +129,7 @@
           <div class="layui-tab layui-tab-brief">
             <ul class="layui-tab-title">
               <li id="auditTabSearch" class="layui-this">标的检索</li>
-              <li id="auditTabResult" >审计结果</li>
+              <li id="auditTabResult">审计结果</li>
             </ul>
             <div class="layui-tab-content">
               <!-- 标的检索 -->
@@ -259,11 +245,11 @@
                     </colgroup>
                     <tbody>
                       <tr>
-                        <td class="tableKey">竞标人数</td>
+                        <td class="tableKey">投标人数</td>
                         <td class="tableValue" id="bidCounts"></td>
                       </tr>
                       <tr>
-                        <td class="tableKey">发布日期</td>
+                        <td class="tableKey">发布时间</td>
                         <td class="tableValue" id="bidDateStart"></td>
                       </tr>
                       <tr>
@@ -285,7 +271,7 @@
                         <td class="tableValue" id="bidCode"></td>
                       </tr>
                       <tr>
-                        <td class="tableKey">截止日期</td>
+                        <td class="tableKey">竞标时间</td>
                         <td class="tableValue" id="bidDateEnd"></td>
                       </tr>
                       <tr>

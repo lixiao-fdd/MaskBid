@@ -54,11 +54,12 @@ public class SBidBC {
         }
     }
 
+    //登录
     public SBidBC(String newAccountName, String newAccountRole, StringBuilder mbkFilePath) {
-        role = newAccountRole;
+        this.role = newAccountRole;
         this.accountName = Global.sha1(newAccountName);
         this.realName = Base64.getEncoder().encodeToString(newAccountName.getBytes(StandardCharsets.UTF_8));
-        if (role.compareTo("0") == 0) {//招标者的招标表名
+        if (this.role.compareTo("0") == 0) {//招标者的招标表名
             Table_SBid_Name = "Tender_" + this.accountName;
         }
 //        String accountSk = createAccount();
@@ -69,6 +70,7 @@ public class SBidBC {
         Global.writeFile(mbkFilePath.toString(), mbkFile);
     }
 
+    //注册
     public SBidBC(String fileContentBase64, JSONObject data) {
         String fileContent = Global.baseDecode(fileContentBase64);
         String accountName = fileContent.substring(0, fileContent.lastIndexOf(":"));
@@ -78,7 +80,7 @@ public class SBidBC {
 
         this.accountName = Global.sha1(accountName);
         this.realName = Base64.getEncoder().encodeToString(accountName.getBytes(StandardCharsets.UTF_8));
-        this.role=accountRole;
+        this.role = accountRole;
 
 //        data.put("loginResult", loadAccount(accountSK));
 
