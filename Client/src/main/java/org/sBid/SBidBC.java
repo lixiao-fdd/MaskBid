@@ -1,18 +1,16 @@
 package org.sBid;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.springframework.util.StopWatch;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 
@@ -36,12 +34,15 @@ public class SBidBC {
     private SBid contract;
     private Account account;
     private Register register;
-    private Tender tender;
+    private Tender tender = null;
     private Parameters parameters;
     private Communicate publish;
     private Communicate subscribe;
     private boolean bidStopFlag = false;
+    private String bidDetailTenderName;
+    private String bidDetailBidCode;
 
+    //旧 构造函数
     public SBidBC(String accountName) {
         role = accountName.substring(accountName.lastIndexOf(":") + 1);
         this.accountName = Global.sha1(accountName);
@@ -54,23 +55,21 @@ public class SBidBC {
         }
     }
 
-    //登录
-    public SBidBC(String newAccountName, String newAccountRole, StringBuilder mbkFilePath) {
+    //注册
+    public SBidBC(String newAccountName, String newAccountRole, StringBuilder mbkFile) {
         this.role = newAccountRole;
         this.accountName = Global.sha1(newAccountName);
         this.realName = Base64.getEncoder().encodeToString(newAccountName.getBytes(StandardCharsets.UTF_8));
+        String accountSk = createAccount();
         if (this.role.compareTo("0") == 0) {//招标者的招标表名
             Table_SBid_Name = "Tender_" + this.accountName;
+            tenderReg();
         }
-//        String accountSk = createAccount();
-        String accountSk = "tempSKtempSKtempSKtempSKtempSKtempSKtempSKtempSKtempSKtempSK";
-        String mbkFile = Base64.getEncoder().encodeToString((newAccountName + ":" + newAccountRole + "-" + accountSk).getBytes(StandardCharsets.UTF_8));
-//        mbkFilePath.append(account.getFilesPath()).append("login.mbk");
-        mbkFilePath.append("./").append("login.mbk");
-        Global.writeFile(mbkFilePath.toString(), mbkFile);
+        mbkFile.append(Base64.getEncoder().encodeToString((newAccountName + ":" + newAccountRole + "-" + accountSk).getBytes(StandardCharsets.UTF_8)));
+
     }
 
-    //注册
+    //登录
     public SBidBC(String fileContentBase64, JSONObject data) {
         String fileContent = Global.baseDecode(fileContentBase64);
         String accountName = fileContent.substring(0, fileContent.lastIndexOf(":"));
@@ -81,11 +80,25 @@ public class SBidBC {
         this.accountName = Global.sha1(accountName);
         this.realName = Base64.getEncoder().encodeToString(accountName.getBytes(StandardCharsets.UTF_8));
         this.role = accountRole;
-
-//        data.put("loginResult", loadAccount(accountSK));
-
+        data.put("loginResult", loadAccount(accountSK));
         data.put("accountRole", accountRole);
-        data.put("loginResult", true);
+        if (this.role.compareTo("0") == 0) {//招标者的招标表名
+            Table_SBid_Name = "Tender_" + this.accountName;
+            tenderReg();
+        } else {//投标者加载历史投标表
+            String jsonFilePath = account.getFilesPath() + "store.txt";
+            File jsonFile = new File(jsonFilePath);
+            if (!jsonFile.exists()) {
+                //todo:将招标方名称，标的编号，加密私钥四个值，利用账号私钥作为密钥进行AES加密，然后存到本账号的存储账本中，条目名称为私钥的哈希
+                String Table_BidderFile_Name = "Bidder_" + Global.sha1(account.getPk());
+                String storeFileName = Global.sha1(account.getSk());
+                Files files = new Files(contract, Table_BidderFile_Name, "");
+                if (files.read(storeFileName)) {
+                    //todo: 解密
+                    Global.writeFile(jsonFilePath, files.getFile_content());
+                }
+            }
+        }
     }
 
     /*竞拍者流程：
@@ -103,11 +116,28 @@ public class SBidBC {
     public String createAccount() {
         account = new Account(accountName, contractAddress);
         account.createAccount();
-//        Global.writeFile(account.getFilesPath() + "name.txt", realName);
-        return account.getSk();
+        String sk = account.getSk();
+        loadAccount(sk);
+        return sk;
     }
 
     //加载账号
+    public boolean loadAccount(String sk) {
+        //软件启动时及切换用户时调用
+        account = new Account(accountName, contractAddress);
+        if (!account.connect()) {
+            System.err.println("Node connect failed\r");
+            return false;
+        }
+        if (!account.loadAccount(sk)) {
+            System.err.println("LoadAccount failed");
+            return false;
+        }
+        contract = account.getContract();
+        return true;
+    }
+
+    //旧 加载账号
     public boolean loadAccount() {
         account = new Account(accountName, contractAddress);
         System.out.println("Node is connecting\r");
@@ -123,20 +153,6 @@ public class SBidBC {
         return true;
     }
 
-    //加载账号
-    public boolean loadAccount(String sk) {
-        //软件启动时及切换用户时调用
-        account = new Account(accountName, contractAddress);
-        if (!account.connect()) {
-            System.err.println("Node connect failed\r");
-            return false;
-        }
-        if (!account.loadAccount(sk)) {
-            System.err.println("LoadAccount failed");
-            return false;
-        }
-        return true;
-    }
 
     //初始化竞标参数
     //key : name, field : counts, p, q, h, g, !【winner】, !【sk】, 【dateStart】, 【dateEnd】, 【bidName】, table_register_name
@@ -153,7 +169,132 @@ public class SBidBC {
         }
     }
 
-    //读取招标者的招标表内容
+    //读取招标者的标的表
+    public boolean readBidTable(JSONObject json, String status) {
+        assert tender != null;
+        if (!tender.read()) {
+            return false;
+        }
+        Table_SBid_Name = tender.getTable_sBid_name();
+        Parameters bidTable = new Parameters(contract, Table_SBid_Name);
+        int bidCounts = tender.getCounts();
+        ArrayList<JSONObject> BidTableList = new ArrayList<>();
+        for (int i = 0; i < bidCounts; i++) {
+            String bidCodeTemp = Global.sha1(Table_SBid_Name + (i + 1));
+            bidTable.setName(bidCodeTemp);
+            if (bidTable.read()) {
+                String dataEnd = bidTable.getDateEnd();
+                switch (status) {
+                    case "ongoing" -> {
+                        if (!Global.dateNowAfter(dataEnd)) {
+                            JSONObject BidTableItems = new JSONObject();
+                            String nameWithContent = Global.baseDecode(bidTable.getBidName());
+                            BidTableItems.put("bidName", nameWithContent.substring(0, nameWithContent.indexOf("\n")));
+                            BidTableItems.put("bidCode", bidTable.getName());
+                            BidTableItems.put("bidDate", bidTable.getDateEnd());
+                            BidTableList.add(BidTableItems);
+                        }
+                    }
+                    case "finish" -> {
+                        if (Global.dateNowAfter(dataEnd)) {
+                            JSONObject BidTableItems = new JSONObject();
+                            String nameWithContent = Global.baseDecode(bidTable.getBidName());
+                            BidTableItems.put("bidName", nameWithContent.substring(0, nameWithContent.indexOf("\n")));
+                            BidTableItems.put("bidCode", bidTable.getName());
+                            BidTableItems.put("bidCounts", bidTable.getCounts());
+                            BidTableList.add(BidTableItems);
+                        }
+                    }
+                }
+
+            }
+        }
+        json.put("data", BidTableList);
+        json.put("count", BidTableList.size());
+        return true;
+    }
+
+    //投标者 读取已投标信息
+    public boolean readBidderBidTable(JSONObject json, String status) {
+        //读取json
+        StringBuilder jsonFileSB = new StringBuilder();
+        String jsonFilePath = account.getFilesPath() + "store.txt";
+        File jsonFile = new File(jsonFilePath);
+        JSONObject storeFile = null;
+        JSONArray storeItemList = null;
+        if (jsonFile.exists()) {
+            Global.readFile(account.getFilesPath() + "store.txt", jsonFileSB);
+            storeFile = JSONObject.parseObject(jsonFileSB.toString());
+            storeItemList = storeFile.getJSONArray("store");
+        } else {
+            json.put("data", "");
+            json.put("count", 0);
+            return true;
+        }
+        ArrayList<JSONObject> BidTableList = new ArrayList<>();
+        for (Object storeItem : storeItemList) {
+            JSONObject item = (JSONObject) storeItem;
+            String bidTenderName = item.getString("tenderName");
+            String bidBidCode = item.getString("bidCode");
+            String bidAmount = item.getString("amount");
+            parameters = new Parameters(contract, "Tender_" + Global.sha1(bidTenderName));
+            parameters.setName(bidBidCode);
+            if (parameters.read()) {
+                String bidDate = parameters.getDateEnd();
+                switch (status) {
+                    case "ongoing" -> {
+                        if (!Global.dateNowAfter(bidDate)) {
+                            JSONObject BidTableItems = new JSONObject();
+                            String nameWithContent = Global.baseDecode(parameters.getBidName());
+                            BidTableItems.put("tenderName", bidTenderName);
+                            BidTableItems.put("bidName", nameWithContent.substring(0, nameWithContent.indexOf("\n")));
+                            BidTableItems.put("bidCode", parameters.getName());
+                            BidTableItems.put("bidDate", parameters.getDateEnd());
+                            BidTableItems.put("bidAmount", bidAmount);
+                            BidTableList.add(BidTableItems);
+                        }
+                    }
+                    case "finish" -> {
+                        if (Global.dateNowAfter(bidDate)) {
+                            JSONObject BidTableItems = new JSONObject();
+                            String nameWithContent = Global.baseDecode(parameters.getBidName());
+                            BidTableItems.put("tenderName", bidTenderName);
+                            BidTableItems.put("bidName", nameWithContent.substring(0, nameWithContent.indexOf("\n")));
+                            BidTableItems.put("bidCode", parameters.getName());
+                            BidTableItems.put("bidAmount", bidAmount);
+                            String winner = parameters.getWinner();
+                            String myIndex = getMyIndex();
+                            if (winner.compareTo(myIndex) == 0)
+                                BidTableItems.put("bidResult", "中标");
+                            else if (winner.compareTo("") == 0)
+                                BidTableItems.put("bidResult", "流标");
+                            else
+                                BidTableItems.put("bidResult", "失败");
+                            BidTableList.add(BidTableItems);
+                        }
+                    }
+                }
+            }
+        }
+        json.put("data", BidTableList);
+        json.put("count", BidTableList.size());
+        return true;
+    }
+
+    //投标者 读取指定招标者的标的表
+    public boolean loadTenderBidList(String tenderName, JSONObject json) {
+        tender = new Tender(contract, Table_Tender_Name, Global.sha1(tenderName));
+        if (!readBidTable(json, "ongoing")) {
+            json.replace("code", 1);
+            json.replace("msg", "招标方\"" + tenderName + "\"不存在");
+            json.put("count", 0);
+            json.put("data", "");
+            return false;
+        }
+        return true;
+    }
+
+    //旧 读取招标者的招标表内容
     public boolean readBidTable(JSONObject json) {
         tenderReg();
         tender.read();
@@ -178,6 +319,105 @@ public class SBidBC {
     }
 
     //读取某次招标的详细信息
+    public boolean loadBidDetail(String bidDetailTenderName, String bidDetailBidCode, int searchRole, JSONObject data) {
+        this.bidDetailTenderName = bidDetailTenderName;
+        this.bidDetailBidCode = bidDetailBidCode;
+        parameters = new Parameters(contract, "Tender_" + Global.sha1(bidDetailTenderName));
+        parameters.setName(bidDetailBidCode);
+        parameters.read();
+        //招标基础信息
+
+        data.put("bidCode", parameters.getName());
+        StringBuilder bidNameSB = new StringBuilder();
+        StringBuilder bidContentSB = new StringBuilder();
+        Global.getBidNameContent(parameters.getBidName(), bidNameSB, bidContentSB);
+        if (searchRole == 0) {
+            data.put("bidName", bidNameSB.toString());
+            data.put("bidContent", bidContentSB.toString());
+            data.put("bidCounts", parameters.getCounts());
+            data.put("bidDateStart", parameters.getDateStart());
+            data.put("bidDateEnd", parameters.getDateEnd());
+            boolean isBidFinish = Global.dateNowAfter(parameters.getDateEnd());
+            data.put("bidStatus", isBidFinish ? "已结束" : "进行中");
+            if (isBidFinish) {//已结束
+                if (parameters.getCounts().intValue() > 1) {//且未流标
+                    //读取sk和winner，并读取winner的cipher_Amount，进行解密
+                    String winner = parameters.getWinner();
+                    Register winnerRegInfo = new Register(contract, parameters.getTable_register_name(), winner, "");
+                    winnerRegInfo.read();
+                    String winnerCipherAmount = winnerRegInfo.getCipher_amount();//为空
+                    String sk = parameters.getSk();
+                    String mod = parameters.getP().toString();
+
+                    createDecryptFileFolder();
+                    //调用c++进行解密
+                    //启动核心
+                    String exePath = account.getRootPath() + "sBid";
+                    File rootDir = new File(account.getRootPath());
+                    List<String> params = new ArrayList<>();
+                    params.add(exePath);
+                    params.add("-d");
+                    params.add(winnerCipherAmount);
+                    params.add(sk);
+                    params.add(mod);
+                    System.out.println(params);
+                    ProcessBuilder processBuilder = new ProcessBuilder(params);
+                    processBuilder.directory(rootDir);
+                    int exitCode = -1;
+                    Process process = null;
+                    try {
+                        process = processBuilder.start();
+                    } catch (java.io.IOException e) {
+                        e.printStackTrace();
+                        System.exit(1);
+                    }
+                    //String host = "192.168.1.121";
+                    String host = "127.0.0.1";
+                    int port = 17000;
+                    Socket client = null;
+                    try {
+                        Thread.sleep(500);
+                        client = new Socket(host, port);
+                        if (client.isConnected()) {
+                            System.out.println("Core start");
+                        }
+                        Communicate communicate = new Communicate("", account.getBcosSDK());
+                        communicate.setClient(client);
+                        communicate.recvCoreFile(bidDecryptFilesPath + "plaintextAmount" + winner + ".txt");
+                        communicate.getClient().close();
+                        exitCode = process.waitFor();
+                    } catch (IOException | InterruptedException e) {
+                        e.printStackTrace();
+                        System.exit(1);
+                    }
+                    if (exitCode != 0) {
+                        System.err.println("Core error, exit (-d)");
+                        System.exit(-1);
+                    } else {
+                        System.out.println("Core finish");
+                    }
+                    StringBuilder amount = new StringBuilder();
+                    if (!Global.readFile(bidDecryptFilesPath + "plaintextAmount" + winner + ".txt", amount))
+                        return false;
+                    data.put("bidAmount", amount);
+                } else {
+                    data.put("bidAmount", "流标");
+                    data.replace("bidStatus", "流标");
+                }
+            } else
+                data.put("bidAmount", "等待中");
+        } else {
+            data.put("bidInfoTenderName", bidDetailTenderName);
+            data.put("bidInfoBidCode", bidDetailBidCode);
+            data.put("bidInfoBidName", bidNameSB.toString());
+            data.put("bidInfoBidContent", bidContentSB.toString());
+            data.put("bidInfoBidDateStart", parameters.getDateStart());
+            data.put("bidInfoBidDateEnd", parameters.getDateEnd());
+        }
+        return true;
+    }
+
+    //旧 读取某次招标的详细信息
     public boolean readBidDetail(JSONObject json, String bidCode) {
         parameters = new Parameters(contract, Table_SBid_Name);
         parameters.setName(bidCode);
@@ -263,20 +503,95 @@ public class SBidBC {
     }
 
     //新建一个招标
-    public boolean parametersInit(String bidName, String counts, String dateStart, String dateEnd) {
-
-        //生成bidName(base64)
-        String bidNameBase64 = Base64.getEncoder().encodeToString(bidName.getBytes(StandardCharsets.UTF_8));//base64处理后的招标名，可恢复
-        //生成name(sha1)
-        //邀请招标
-//        String fullNamePlain = bidName + dateStart;
-//        sBid_name = Global.sha1(fullNamePlain);//key:用于查找的招标名
-        //公开招标
+    public boolean postNewBid(String bidName, String content, String dateStart, String dateEnd) {
+        //将招标名称与招标内容打包(base64)
+        String bidBase64 = Base64.getEncoder().encodeToString((bidName + "\n" + content).getBytes(StandardCharsets.UTF_8));
+        //生成bidCode(sha1)
+        assert tender != null;
         int bidCounts = tender.getCounts();
         sBid_name = Global.sha1(Table_SBid_Name + (bidCounts + 1));
         //创建文件夹
         createBidFileFolder();
+        //调用c++生成parameters.txt
+        //启动核心
+        String exePath = account.getRootPath() + "sBid";
+        File rootDir = new File(account.getRootPath());
+        List<String> params = new ArrayList<>();
+        params.add(exePath);
+        params.add("-g");
+        ProcessBuilder processBuilder = new ProcessBuilder(params);
+        processBuilder.directory(rootDir);
+        int exitCode = -1;
+        Process process = null;
+        try {
+            process = processBuilder.start();
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        //String host = "192.168.1.121";
+        String host = "127.0.0.1";
+        int port = 17000;
+        Socket client = null;
+        try {
+            Thread.sleep(500);
+            client = new Socket(host, port);
+            if (client.isConnected()) {
+                System.out.println("Core start");
+            }
+            Communicate communicate = new Communicate("", account.getBcosSDK());
+            communicate.setClient(client);
+            communicate.recvCoreFile(bidFilesPath + "parameters.txt");
+            communicate.getClient().close();
+            exitCode = process.waitFor();
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        if (exitCode != 0) {
+            System.err.println("Core error, exit (-g)");
+            System.exit(-1);
+        } else {
+            System.out.println("Core finish");
+        }
 
+        // Load parameters.txt
+        String parametersFilePath = bidFilesPath + "parameters.txt";
+        File parametersFile = new File(parametersFilePath);
+        ArrayList<String> fileContent = new ArrayList<>();
+        if (!Global.readFile(parametersFilePath, fileContent))
+            return false;
+        String p = fileContent.get(0);
+        String q = fileContent.get(1);
+        String h = fileContent.get(2);
+        String g = fileContent.get(3);
+        //创建招标表
+        Parameters parameters = new Parameters(contract, Table_SBid_Name);
+        String[] paras_value = {"0", p, q, h, g, dateStart, dateEnd, bidBase64};
+        parameters.setName(sBid_name);
+        if (parameters.insert(paras_value)) {
+            //招标机构招标数加一
+            tender.add();
+            bidCounts = tender.getCounts();
+            System.out.println("Created a new bid");
+        }
+        System.out.println("@".repeat(30));
+        System.out.println("TenderName: " + Table_SBid_Name);
+        System.out.println("bid counts: " + bidCounts);
+        System.out.println("BidCode: " + sBid_name);
+        System.out.println("@".repeat(30));
+        return true;
+    }
+
+    //旧 新建一个招标
+    public boolean parametersInit(String bidName, String counts, String dateStart, String dateEnd) {
+        //生成bidName(base64)
+        String bidNameBase64 = Base64.getEncoder().encodeToString(bidName.getBytes(StandardCharsets.UTF_8));//base64处理后的招标名，可恢复
+        //生成name(sha1)
+        int bidCounts = tender.getCounts();
+        sBid_name = Global.sha1(Table_SBid_Name + (bidCounts + 1));
+        //创建文件夹
+        createBidFileFolder();
         //调用c++生成parameters.txt
         //启动核心
         String exePath = account.getRootPath() + "sBid";
@@ -349,6 +664,117 @@ public class SBidBC {
         System.out.println("TenderName: " + Table_SBid_Name);
         System.out.println("BidCode: " + sBid_name);
         System.out.println("@".repeat(30));
+        return true;
+    }
+
+    //投标者 提交投标金额
+    public boolean postAmount(String bidTenderName, String bidBidCode, String bidAmount) {
+        parametersRead("Tender_" + Global.sha1(bidTenderName), bidBidCode);
+        index = getEmptyIndex();
+        if (index.compareTo("-1") == 0) {
+            return false;
+        }
+        createBidIndexFileFolder();
+        Global.writeFile(bidIndexFilesPath + "plaintext_int" + index + ".txt", bidAmount);
+        //启动核心
+        String exePath = account.getRootPath() + "sBid";
+        File rootDir = new File(account.getRootPath());
+        List<String> params = new ArrayList<>();
+        params.add(exePath);
+        params.add("-r");
+        params.add(index);
+        ProcessBuilder processBuilder = new ProcessBuilder(params);
+        processBuilder.directory(rootDir);
+        int exitCode = -1;
+        Process process = null;
+        try {
+            process = processBuilder.start();
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        //String host = "192.168.1.121";
+        String host = "127.0.0.1";
+        int port = 17000;
+        port += Integer.parseInt(index);
+        Socket client = null;
+        try {
+            Thread.sleep(500);
+            client = new Socket(host, port);
+            if (client.isConnected()) {
+                System.out.println("Core start");
+            }
+            Communicate communicate = new Communicate("", account.getBcosSDK());
+            communicate.setClient(client);
+            communicate.sendCoreFile(bidFilesPath + "parameters.txt");
+            communicate.sendCoreFile(bidIndexFilesPath + "plaintext_int" + index + ".txt");
+            communicate.recvCoreFile(bidIndexFilesPath + "pk" + index + ".txt");
+            communicate.recvCoreFile(bidIndexFilesPath + "sk" + index + ".txt");
+            communicate.recvCoreFile(bidIndexFilesPath + "cipherAmount" + index + ".txt");
+            communicate.getClient().close();
+            exitCode = process.waitFor();
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        if (exitCode != 0) {
+            System.err.println("Core error, exit (-r)");
+            System.exit(-1);
+        } else {
+            System.out.println("Core finish");
+        }
+        register = new Register(contract, parameters.getTable_register_name(), index, bidIndexFilesPath);
+        if (register.insert(realName, account.getPk())) {
+            System.out.println("Registrate successes");
+        } else {
+            System.out.println("Registrate failed");
+            return false;
+        }
+        //读取json
+        StringBuilder jsonFileSB = new StringBuilder();
+        String jsonFilePath = account.getFilesPath() + "store.txt";
+        File jsonFile = new File(jsonFilePath);
+        JSONObject storeFile = null;
+        JSONArray storeItemList = null;
+        if (jsonFile.exists()) {
+            Global.readFile(account.getFilesPath() + "store.txt", jsonFileSB);
+            storeFile = JSONObject.parseObject(jsonFileSB.toString());
+            storeItemList = storeFile.getJSONArray("store");
+        } else {
+            storeFile = new JSONObject();
+            storeItemList = new JSONArray();
+            storeFile.put("store", storeItemList);
+        }
+        //新的条目
+        JSONObject storeItem = new JSONObject();
+        storeItem.put("tenderName", bidTenderName);
+        storeItem.put("bidCode", bidBidCode);
+        storeItem.put("amount", bidAmount);
+        StringBuilder skSB = new StringBuilder();
+        Global.readFile(bidIndexFilesPath + "sk" + index + ".txt", skSB);
+        storeItem.put("sk", skSB.toString());
+        //插入json并写入文件
+        storeItemList.add(storeItem);
+        storeFile.replace("store", storeItemList);
+        Global.writeFile(account.getFilesPath() + "store.txt", storeFile.toJSONString());
+
+        //更新链上数据
+        String Table_BidderFile_Name = "Bidder_" + Global.sha1(account.getPk());
+        String storeFileName = Global.sha1(account.getSk());
+        String storeFilePath = account.getFilesPath() + storeFileName;
+        //todo:加密
+        Global.writeFile(storeFilePath, storeFile.toJSONString());
+        //上传
+        Files files = new Files(contract, Table_BidderFile_Name, account.getFilesPath());
+        files.delete(storeFileName);
+        files.insert(storeFileName);
+        File tempFile = new File(storeFilePath);
+        if (tempFile.delete()) {
+            System.out.println(tempFile.getAbsolutePath() + "删除成功");
+        } else {
+            System.out.println(tempFile.getAbsolutePath() + "删除失败");
+        }
+        //todo:将招标方名称，标的编号，加密私钥四个值，利用账号私钥作为密钥进行AES加密，然后存到本账号的存储账本中，条目名称为私钥的哈希
         return true;
     }
 
@@ -470,6 +896,34 @@ public class SBidBC {
     }
 
     //遍历竞标注册表，返回第一个未被占用的编号
+    private String getEmptyIndex() {
+        int i = 1;
+        while (true) {
+            Register register = new Register(contract, parameters.getTable_register_name(), String.valueOf(i), "");
+            if (!register.read())
+                break;
+            if (register.getName().compareTo(realName) == 0)
+                return "-1";
+            ++i;
+        }
+        return String.valueOf(i);
+    }
+
+    //遍历竞标注册表，返回自己的编号
+    private String getMyIndex() {
+        int i = 1;
+        while (true) {
+            Register register = new Register(contract, parameters.getTable_register_name(), String.valueOf(i), "");
+            if (!register.read())
+                return "-1";
+            if (register.getName().compareTo(realName) == 0)
+                break;
+            ++i;
+        }
+        return String.valueOf(i);
+    }
+
+    //旧 遍历竞标注册表，返回第一个未被占用的编号
     private String getIndex() {
         int i = 1;
         for (; i <= counts; i++) {
@@ -500,6 +954,29 @@ public class SBidBC {
     }
 
     //读取注册表
+    public void getRegInfo(JSONObject json) {
+        parameters = new Parameters(contract, "Tender_" + Global.sha1(bidDetailTenderName));
+        parameters.setName(bidDetailBidCode);
+        parameters.read();
+        counts = parameters.getCounts().intValue();
+        ArrayList<JSONObject> info = new ArrayList<>();
+        for (int i = 0; i <= counts; i++) {
+            Register register = new Register(contract, parameters.getTable_register_name(), String.valueOf(i), "");
+            if (!register.read())
+                continue;
+            JSONObject infoItem = new JSONObject();
+            infoItem.put("bidderIndex", register.getIndex());
+            infoItem.put("bidderName", Global.baseDecode(register.getName()));
+            infoItem.put("bidderPk", register.getAccountPk());
+            infoItem.put("bidderResults", register.getResult());
+//            List<String> temp = List.of(register.getIndex(), Global.baseDecode(register.getName()), register.getAccountPk(), register.getResult());
+            info.add(infoItem);
+        }
+        json.put("count", counts);
+        json.put("data", info);
+    }
+
+    //旧 读取注册表
     public void getRegistrationInfo(JSONObject json) {
         counts = parameters.getCounts().intValue();
         ArrayList<List<String>> info = new ArrayList<>();
@@ -526,7 +1003,7 @@ public class SBidBC {
         return j;
     }
 
-    //链上注册
+    //旧 链上注册
     public boolean registration(StringBuilder status) {
         index = getIndex();
         if (index.compareTo("-1") == 0) {

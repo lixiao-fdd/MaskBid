@@ -129,6 +129,16 @@ public class Parameters {
     }
 
     public BigInteger getCounts() {
+        if (this.counts.intValue() == 0) {
+            int regCounts = 1;
+            while (true) {
+                Register register = new Register(contract, table_register_name, String.valueOf(regCounts), "");
+                if (!register.read())
+                    break;
+                ++regCounts;
+            }
+            return new BigInteger(String.valueOf(regCounts - 1));
+        }
         return this.counts;
     }
 

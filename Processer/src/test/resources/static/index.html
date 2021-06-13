@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>招标 - MaskBid</title>
+  <link rel="stylesheet" href="./css/layui.css">
+  <link rel="stylesheet" href="./css/global.css">
+</head>
+
+<body>
+  <div class="layui-layout layui-layout-admin">
+    <!-- 头部区域 -->
+    <div class="layui-header">
+      <div class="layui-logo layui-hide-xs layui-bg-black defaultCursor">MaskBid</div>
+      <ul class="layui-nav layui-layout-right">
+        <li class="layui-nav-item layui-hide layui-show-md-inline-block">
+          <a id="mainTitleAccountName">用户名</a>
+          <dl class="layui-nav-child">
+            <dd><a onclick="">账户信息</a></dd>
+            <dd><a onclick="">退出登录</a></dd>
+          </dl>
+        </li>
+      </ul>
+    </div>
+
+    <!-- 左侧导航 -->
+    <div class="layui-side layui-bg-black">
+      <div class="layui-side-scroll">
+        <ul class="layui-nav layui-nav-tree" lay-filter="test">
+          <li class="layui-nav-item"><a class="layui-this" onclick="">标的管理</a></li>
+          <li class="layui-nav-item"><a onclick="">标的审计</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 内容主体区域 -->
+    <div class="layui-body">
+
+      <div class="layui-tab layui-tab-brief">
+        <ul class="layui-tab-title">
+          <li class="layui-this">发布标的</li>
+          <li>标的历史</li>
+        </ul>
+        <div class="layui-tab-content">
+          <!-- 新的标的 -->
+          <div class="layui-tab-item layui-show">
+
+          </div>
+
+          <!-- 标的管理 -->
+          <div class="layui-tab-item">
+            <div class="layui-collapse" lay-accordion>
+              <!-- 进行中的标的 -->
+              <div class="layui-colla-item">
+                <h2 class="layui-colla-title">进行中</h2>
+                <div class="layui-colla-content layui-show">
+                  <table id="tableBidOngoing" lay-filter="bidOngoing"></table>
+                </div>
+              </div>
+              <!-- 已完成的标的 -->
+              <div class="layui-colla-item">
+                <h2 class="layui-colla-title">已完成</h2>
+                <div class="layui-colla-content">
+                  <ul>
+                    <li>暂无</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+  <script src="./layui.js"></script>
+  <script src="./js/jquery.js"></script>
+  <script src="./js/global.js"></script>
+  <script>
+    //JS 
+    layui.use(['element', 'layer', 'util'], function () {
+      var element = layui.element
+        , layer = layui.layer
+        , util = layui.util
+        , $ = layui.$;
+    });
+  </script>
+</body>
+
+</html>

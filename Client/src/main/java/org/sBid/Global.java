@@ -301,4 +301,24 @@ public class Global {
         Date bidDateEnd = calendar.getTime();
         return sdf.format(bidDateEnd);
     }
+
+    //时间比较，若当前时间大于输入时间，则返回true
+    public static boolean dateNowAfter(String date) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy年MM月dd日 HH时mm分");
+        Date bidDateStart = new Date();
+        Date dateNow = new Date();
+        try {
+            bidDateStart = sdf.parse(date);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return dateNow.compareTo(bidDateStart) > 0;
+    }
+
+    //分离招标名陈与招标内容
+    public static void getBidNameContent(String nameWithContentBase64, StringBuilder bidName, StringBuilder bidContent) {
+        String nameWithContent = Global.baseDecode(nameWithContentBase64);
+        bidName.append(nameWithContent, 0, nameWithContent.indexOf("\n"));
+        bidContent.append(nameWithContent.substring(nameWithContent.indexOf("\n") + 1));
+    }
 }

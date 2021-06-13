@@ -4,6 +4,7 @@ let auditTenderName;
 let bidTenderName;
 let auditStart;
 let bidderPostBidIndex;
+
 //创建JSON
 function sendJson(jsonData, functionName) {
     $.ajax({
@@ -21,28 +22,32 @@ function sendJson(jsonData, functionName) {
         }
     });
 }
+
 //回调测试
 function callback(json) {
     console.log(json);
 }
+
 //退出登录
 function logout() {
-    let jsonData = { "act": "logout" };
+    let jsonData = {"act": "logout"};
     sendJson(jsonData, callbackLogut);
     layer.load(2);
 }
+
 //退出登录回调
 function callbackLogut(json) {
     layer.closeAll('loading');
     window.location.replace("./");
 
 }
+
 //获取账户信息并渲染发布标的页面，以及发布标的
 function tenderStarter() {
     let newBidDataStartValue;
     tabShowNow = "tenderBidAdmin";
     //获取账户信息
-    let jsonData = { "act": "listAccountInfo" };
+    let jsonData = {"act": "listAccountInfo"};
     sendJson(jsonData, callbackListAccountInfo);
     //表单控件
     //发布新标的
@@ -114,12 +119,13 @@ function tenderStarter() {
         });
     });
 }
+
 //获取账户信息
 function bidderStarter() {
     let newBidDataStartValue;
     tabShowNow = "bidderBidAdmin";
     //获取账户信息
-    let jsonData = { "act": "listAccountInfo" };
+    let jsonData = {"act": "listAccountInfo"};
     sendJson(jsonData, callbackListAccountInfo);
     //标的检索控件
     layui.use('form', function () {
@@ -184,6 +190,7 @@ function bidderStarter() {
     });
 
 }
+
 //回调 获取账户信息
 function callbackListAccountInfo(json) {
     console.log(json);
@@ -193,18 +200,27 @@ function callbackListAccountInfo(json) {
     document.getElementById("accountInfoAddress").innerText = json.data.accountAddress;
     document.getElementById("accountInfoPk").innerText = json.data.accountPk;
 }
+
 //渲染进行中的标的表格
 function loadTableBidOngoing() {
     table.render({
         elem: '#tableBidOngoing'
         , url: '/table' //数据接口
-        , headers: { "tableType": 'BidOngoing' }
+        , headers: {"tableType": 'BidOngoing'}
         , page: false //开启分页
         , cols: [[ //表头
-            { field: 'bidName', title: '标的名称', sort: true, unresize: true, minWidth: 200 }
-            , { field: 'bidCode', title: '标的编号', width: 350, unresize: true }
-            , { field: 'bidDate', title: '竞标开始时间', width: 200, sort: true, align: "center", unresize: true }
-            , { field: 'detail', title: '', width: 100, fixed: 'right', align: "center", unresize: true, templet: '<div><a href="javascript:;" onclick="showBidDetail(this)">详细信息</a></div>' }
+            {field: 'bidName', title: '标的名称', sort: true, unresize: true, minWidth: 200}
+            , {field: 'bidCode', title: '标的编号', width: 350, unresize: true}
+            , {field: 'bidDate', title: '竞标开始时间', width: 200, sort: true, align: "center", unresize: true}
+            , {
+                field: 'detail',
+                title: '',
+                width: 100,
+                fixed: 'right',
+                align: "center",
+                unresize: true,
+                templet: '<div><a href="javascript:;" onclick="showBidDetail(this)">详细信息</a></div>'
+            }
         ]]
         , size: 'lg '
         , text: {
@@ -212,18 +228,27 @@ function loadTableBidOngoing() {
         }
     });
 }
+
 //渲染已完成的标的表格
 function loadTableBidFinished() {
     table.render({
         elem: '#tableBidFinished'
         , url: '/table' //数据接口
-        , headers: { "tableType": 'BidFinished' }
+        , headers: {"tableType": 'BidFinished'}
         , page: false //开启分页
         , cols: [[ //表头
-            { field: 'bidName', title: '标的名称', sort: true, unresize: true, minWidth: 200 }
-            , { field: 'bidCode', title: '标的编号', width: 350, unresize: true }
-            , { field: 'bidCounts', title: '投标人数', width: 110, sort: true, align: "center", unresize: true }
-            , { field: 'detail', title: '', width: 100, fixed: 'right', align: "center", unresize: true, templet: '<div><a href="javascript:;" onclick="showBidDetail(this)">详细信息</a></div>' }
+            {field: 'bidName', title: '标的名称', sort: true, unresize: true, minWidth: 200}
+            , {field: 'bidCode', title: '标的编号', width: 350, unresize: true}
+            , {field: 'bidCounts', title: '投标人数', width: 110, sort: true, align: "center", unresize: true}
+            , {
+                field: 'detail',
+                title: '',
+                width: 100,
+                fixed: 'right',
+                align: "center",
+                unresize: true,
+                templet: '<div><a href="javascript:;" onclick="showBidDetail(this)">详细信息</a></div>'
+            }
         ]]
         , size: 'lg '
         , text: {
@@ -231,18 +256,19 @@ function loadTableBidFinished() {
         }
     });
 }
+
 //渲染标的投标信息表格
 function loadTableBidRegInfo() {
     table.render({
         elem: '#tableBidRegInfo'
         , url: '/table' //数据接口
-        , headers: { "tableType": 'BidRegInfo' }
+        , headers: {"tableType": 'BidRegInfo'}
         , page: false //开启分页
         , cols: [[ //表头
-            { field: 'bidderIndex', title: '编号', sort: true, unresize: true, width: 90, align: "center" }
-            , { field: 'bidderName', title: '投标机构名称', unresize: true }
-            , { field: 'bidderPk', title: '投标机构公钥', width: 360, unresize: true }
-            , { field: 'bidderResults', title: '投标结果', sort: true, width: 100, align: "center", unresize: true }
+            {field: 'bidderIndex', title: '编号', sort: true, unresize: true, width: 90, align: "center"}
+            , {field: 'bidderName', title: '投标机构名称', unresize: true}
+            , {field: 'bidderPk', title: '投标机构公钥', width: 360, unresize: true}
+            , {field: 'bidderResults', title: '投标结果', sort: true, width: 120, align: "center", unresize: true}
         ]]
         , size: 'lg '
         , text: {
@@ -251,18 +277,27 @@ function loadTableBidRegInfo() {
         , height: 490
     });
 }
+
 //渲染指定招标方已完成的标的列表
 function loadTableAuditBidList(tenderName) {
     table.render({
         elem: '#tableAuditBidList'
         , url: '/searchFinish' //数据接口
-        , headers: { "tenderName": encodeURI(tenderName) }
+        , headers: {"tenderName": encodeURI(tenderName)}
         , page: false //开启分页
         , cols: [[ //表头
-            { field: 'bidName', title: '标的名称', sort: true, unresize: true, minWidth: 200 }
-            , { field: 'bidCode', title: '标的编号', width: 350, width: 350, unresize: true }
-            , { field: 'bidCounts', title: '投标人数', width: 110, sort: true, align: "center", unresize: true }
-            , { field: 'detail', title: '', width: 100, fixed: 'right', align: "center", unresize: true, templet: '<div><a href="javascript:;" onclick="prepareAudit(this)">开始审计</a></div>' }
+            {field: 'bidName', title: '标的名称', sort: true, unresize: true, minWidth: 200}
+            , {field: 'bidCode', title: '标的编号', width: 350, width: 350, unresize: true}
+            , {field: 'bidCounts', title: '投标人数', width: 110, sort: true, align: "center", unresize: true}
+            , {
+                field: 'detail',
+                title: '',
+                width: 100,
+                fixed: 'right',
+                align: "center",
+                unresize: true,
+                templet: '<div><a href="javascript:;" onclick="prepareAudit(this)">开始审计</a></div>'
+            }
         ]]
         , size: 'lg '
         , text: {
@@ -270,18 +305,27 @@ function loadTableAuditBidList(tenderName) {
         }
     });
 }
+
 //渲染指定招标方进行中的标的列表 投标方投标页
 function loadTableBidsList(tenderName) {
     table.render({
         elem: '#tableBidsList'
         , url: '/searchOngoing' //数据接口
-        , headers: { "tenderName": encodeURI(tenderName) }
+        , headers: {"tenderName": encodeURI(tenderName)}
         , page: false //开启分页
         , cols: [[ //表头
-            { field: 'bidName', title: '标的名称', sort: true, unresize: true, minWidth: 200 }
-            , { field: 'bidCode', title: '标的编号', width: 350, unresize: true }
-            , { field: 'bidCounts', title: '标数限制', width: 110, sort: true, align: "center", unresize: true }
-            , { field: 'detail', title: '', width: 100, fixed: 'right', align: "center", unresize: true, templet: '<div><a href="javascript:;" onclick="loadBid(this)">投标</a></div>' }
+            {field: 'bidName', title: '标的名称', sort: true, unresize: true, minWidth: 200}
+            , {field: 'bidCode', title: '标的编号', width: 350, unresize: true}
+            , {field: 'bidDate', title: '竞标开始时间', width: 200, sort: true, align: "center", unresize: true}
+            , {
+                field: 'detail',
+                title: '',
+                width: 80,
+                fixed: 'right',
+                align: "center",
+                unresize: true,
+                templet: '<div><a href="javascript:;" onclick="loadBid(this)">投标</a></div>'
+            }
         ]]
         , size: 'lg '
         , text: {
@@ -289,20 +333,29 @@ function loadTableBidsList(tenderName) {
         }
     });
 }
+
 //渲染进行中的标的表格
 function loadBidderTableBidOngoing() {
     table.render({
         elem: '#bidderTableBidOngoing'
         , url: '/table' //数据接口
-        , headers: { "tableType": 'bidderBidOngoing' }
+        , headers: {"tableType": 'bidderBidOngoing'}
         , page: false //开启分页
         , cols: [[ //表头
-            { field: 'tenderName', title: '招标方', sort: true, unresize: true, minWidth: 120 }
-            , { field: 'bidName', title: '标的名称', sort: true, unresize: true, minWidth: 120 }
-            , { field: 'bidCode', title: '标的编号', width: 350, unresize: true }
-            , { field: 'bidDate', title: '竞标开始时间', width: 200, sort: true, align: "center", unresize: true }
-            , { field: 'bidAmount', title: '投标金额', width: 110, sort: true, align: "center", unresize: true }
-            , { field: 'detail', title: '', width: 100, fixed: 'right', align: "center", unresize: true, templet: '<div><a href="javascript:;" onclick="prepareBid(this)">准备竞标</a></div>' }
+            {field: 'tenderName', title: '招标机构', sort: true, unresize: true, minWidth: 120}
+            , {field: 'bidName', title: '标的名称', sort: true, unresize: true, minWidth: 120}
+            , {field: 'bidCode', title: '标的编号', minWidth: 120, unresize: true}
+            , {field: 'bidDate', title: '竞标开始时间', width: 200, sort: true, align: "center", unresize: true}
+            , {field: 'bidAmount', title: '投标金额', width: 110, sort: true, align: "center", unresize: true}
+            , {
+                field: 'detail',
+                title: '',
+                width: 100,
+                fixed: 'right',
+                align: "center",
+                unresize: true,
+                templet: '<div><a href="javascript:;" onclick="prepareBid(this)">准备竞标</a></div>'
+            }
         ]]
         , size: 'lg '
         , text: {
@@ -310,19 +363,29 @@ function loadBidderTableBidOngoing() {
         }
     });
 }
+
 //渲染已完成的标的表格
 function loadBidderTableBidFinished() {
     table.render({
         elem: '#bidderTableBidFinish'
         , url: '/table' //数据接口
-        , headers: { "tableType": 'bidderBidFinish' }
+        , headers: {"tableType": 'bidderBidFinish'}
         , page: false //开启分页
         , cols: [[ //表头
-            { field: 'tenderName', title: '招标方', sort: true, unresize: true, minWidth: 130 }
-            , { field: 'bidName', title: '标的名称', sort: true, unresize: true, minWidth: 130 }
-            , { field: 'bidCode', title: '标的编号', width: 350, unresize: true }
-            , { field: 'bidAmount', title: '投标金额', width: 110, sort: true, align: "center", unresize: true }
-            , { field: 'bidResult', title: '竞标结果', width: 100, fixed: 'right', align: "center", unresize: true }
+            {field: 'tenderName', title: '招标机构', sort: true, unresize: true, minWidth: 130}
+            , {field: 'bidName', title: '标的名称', sort: true, unresize: true, minWidth: 130}
+            , {field: 'bidCode', title: '标的编号', width: 350, unresize: true}
+            , {field: 'bidAmount', title: '投标金额', width: 110, sort: true, align: "center", unresize: true}
+            , {field: 'bidResult', title: '竞标结果', width: 100, fixed: 'right', align: "center", unresize: true}
+            , {
+                field: 'detail',
+                title: '',
+                width: 100,
+                fixed: 'right',
+                align: "center",
+                unresize: true,
+                templet: '<div><a href="javascript:;" onclick="showBidderBidDetail(this)">详细信息</a></div>'
+            }
         ]]
         , size: 'lg '
         , text: {
@@ -330,20 +393,21 @@ function loadBidderTableBidFinished() {
         }
     });
 }
+
 //渲染审计标的投标者表格
 function loadTableBidAuditRegInfo() {
     document.getElementById("auditLogBox").classList.remove("layui-hide");
     table.render({
         elem: '#tableBidAuditRegInfo'
         , url: '/table' //数据接口
-        , headers: { "tableType": 'BidAuditRegInfo' }
+        , headers: {"tableType": 'BidAuditRegInfo'}
         , page: false //开启分页
         , cols: [[ //表头
-            { field: 'bidderIndex', title: '编号', sort: true, unresize: true, width: 90, align: "center" }
-            , { field: 'bidderName', title: '投标机构名称', width: 500, unresize: true }
-            , { field: 'bidderPk', title: '投标机构公钥', minWidth: 120, unresize: true }
-            , { field: 'bidderResults', title: '投标结果', sort: true, width: 110, align: "center", unresize: true }
-            , { field: 'auditResults', title: '审计结果', width: 100, align: "center", unresize: true }
+            {field: 'bidderIndex', title: '编号', sort: true, unresize: true, width: 90, align: "center"}
+            , {field: 'bidderName', title: '投标机构名称', width: 500, unresize: true}
+            , {field: 'bidderPk', title: '投标机构公钥', minWidth: 120, unresize: true}
+            , {field: 'bidderResults', title: '投标结果', sort: true, width: 110, align: "center", unresize: true}
+            , {field: 'auditResults', title: '审计结果', width: 100, align: "center", unresize: true}
         ]]
         , size: 'lg '
         , text: {
@@ -352,13 +416,15 @@ function loadTableBidAuditRegInfo() {
         , height: 300
     });
 }
+
 //查看标的的详细信息
 function showBidDetail(thisObj) {
     let thisBidCode = thisObj.parentElement.parentElement.parentElement.childNodes[1].innerText
-    let data = { "tenderName": document.getElementById("mainTitleAccountName").innerText, "bidCode": thisBidCode };
-    let jsonData = { "act": "showBidDetail", "data": data };
+    let data = {"tenderName": document.getElementById("mainTitleAccountName").innerText, "bidCode": thisBidCode};
+    let jsonData = {"act": "showBidDetail", "data": data};
     sendJson(jsonData, callbackShowBidDetail);
 }
+
 //回调 查看标的的详细信息
 function callbackShowBidDetail(json) {
     console.log(json);
@@ -384,18 +450,56 @@ function callbackShowBidDetail(json) {
         , area: ['1000px', '800px']
     });
 }
+
+//投标者 查看标的的详细信息
+function showBidderBidDetail(thisObj) {
+    let thisTenderName = thisObj.parentElement.parentElement.parentElement.childNodes[0].innerText;
+    let thisBidCode = thisObj.parentElement.parentElement.parentElement.childNodes[2].innerText;
+    let data = {"tenderName": thisTenderName, "bidCode": thisBidCode};
+    let jsonData = {"act": "showBidDetail", "data": data};
+    sendJson(jsonData, callbackShowBidderBidDetail);
+}
+
+//回调 投标者 查看标的的详细信息
+function callbackShowBidderBidDetail(json) {
+    console.log(json);
+    document.getElementById("bidName").innerText = json.data.bidName;
+    document.getElementById("bidCounts").innerText = json.data.bidCounts;
+    document.getElementById("bidCode").innerText = json.data.bidCode;
+    document.getElementById("bidDateStart").innerText = json.data.bidDateStart;
+    document.getElementById("bidDateEnd").innerText = json.data.bidDateEnd;
+    document.getElementById("bidStatus").innerText = json.data.bidStatus;
+    document.getElementById("bidAmount").innerText = json.data.bidAmount;
+    if (json.data.bidContent != "")
+        document.getElementById("bidContent").innerText = json.data.bidContent;
+    else
+        document.getElementById("bidContent").innerText = "无";
+
+    layer.open({
+        type: 1
+        , title: false
+        , content: $('#bidDetail')
+        , move: '.layerMove'
+        , moveOut: true
+        , area: '1000px'
+    });
+}
+
+
 //切换页面
 function switchPage(thisObj) {
     document.getElementById(tabShowNow).classList.remove("layui-show");
     tabShowNow = thisObj.attributes.getNamedItem("tabId").value;
     document.getElementById(tabShowNow).classList.add("layui-show");
 }
+
 //发布标的
 function postNewBid(data, date) {
     data.newBidDateStart = date.year + "年" + date.month + "月" + date.date + "日 " + date.hours + "时" + date.minutes + "分";
-    let jsonFormData = { "act": "postNewBid", "data": data };
+    let jsonFormData = {"act": "postNewBid", "data": data};
     sendJson(jsonFormData, callbackPostNewBid);
 }
+
 //回调 发布标的
 function callbackPostNewBid(json) {
     console.log(json);
@@ -406,20 +510,23 @@ function callbackPostNewBid(json) {
     document.getElementById("tableBidOngoingItem").classList.add("layui-show");
     document.getElementById("postBidForm").reset();
 }
+
 //投标者标的检索
 function bidderSearchBid(data) {
     bidTenderName = data.bidTenderName;
     //将检索关键字传递给表格渲染服务
     loadTableBidsList(bidTenderName);
 }
+
 //加载标的
 function loadBid(thisObj) {
     //发送要审计的招标方名称以及标的编号
     let thisBidCode = thisObj.parentElement.parentElement.parentElement.childNodes[1].innerText
-    let data = { "tenderName": bidTenderName, "bidCode": thisBidCode };
-    let jsonData = { "act": "loadBid", "data": data };
+    let data = {"tenderName": bidTenderName, "bidCode": thisBidCode};
+    let jsonData = {"act": "loadBid", "data": data};
     sendJson(jsonData, callbackLoadBid);
 }
+
 //回调 加载标的
 function callbackLoadBid(json) {
     console.log(json);
@@ -443,29 +550,36 @@ function callbackLoadBid(json) {
     // document.getElementById("bidTabResult").classList.add("layui-this");
     // document.getElementById("bidTabItemResult").classList.add("layui-show");
 }
+
 //发布投标
 function postBidAmount(data) {
     let tenderName = document.getElementById("bidInfoTenderName").innerText;
     let bidCode = document.getElementById("bidInfoBidCode").innerText;
-    let jsonData = { "tenderName": tenderName, "bidCode": bidCode, "bidAmount": data.postBidAmount }
-    let jsonFormData = { "act": "postBidAmount", "data": jsonData };
+    let jsonData = {"tenderName": tenderName, "bidCode": bidCode, "bidAmount": data.postBidAmount}
+    let jsonFormData = {"act": "postBidAmount", "data": jsonData};
     sendJson(jsonFormData, callbackPostBidAmount);
 }
+
 //回调 发布投标
 function callbackPostBidAmount(json) {
     console.log(json);
     if (json.data.postBidStatus) {
         //跳转到投标页
         layer.close(bidderPostBidIndex);
-        // document.getElementById("bidTabResult").classList.remove("layui-this");
-        // document.getElementById("bidTabItemResult").classList.remove("layui-show");
         loadBidderTableBidOngoing();
         document.getElementById("bidTabSearch").classList.remove("layui-this");
         document.getElementById("bidTabItemSearch").classList.remove("layui-show");
         document.getElementById("bidTabBidOngoing").classList.add("layui-this");
         document.getElementById("bidTabItemOngoing").classList.add("layui-show");
+    } else {
+        layer.open({
+            title: '注意'
+            , content: '您已提交投标，请勿重复投标'
+        });
+        layer.close(bidderPostBidIndex);
     }
 }
+
 //准备竞标
 function prepareBid(thisObj) {
     layer.open({
@@ -475,14 +589,15 @@ function prepareBid(thisObj) {
         , yes: function (index, layero) {
             let thisTender = thisObj.parentElement.parentElement.parentElement.childNodes[0].innerText
             let thisBidCode = thisObj.parentElement.parentElement.parentElement.childNodes[2].innerText;
-            let data = { "tenderName": thisTender, "bidCode": thisBidCode };
-            let jsonData = { "act": "prepareBid", "data": data };
+            let data = {"tenderName": thisTender, "bidCode": thisBidCode};
+            let jsonData = {"act": "prepareBid", "data": data};
             sendJson(jsonData, callbackPrepareBid);
             layer.close(index);
             // layer.load(2);
         }
     });
 }
+
 //回调 准备竞标
 function callbackPrepareBid(json) {
     console.log(json);
@@ -493,18 +608,20 @@ function callbackPrepareBid(json) {
     });
     loadBidderTableBidOngoing();
 }
+
 //审计标的检索
 function auditSearchBid(data) {
     auditTenderName = data.auditTenderName;
     //将检索关键字传递给表格渲染服务
     loadTableAuditBidList(auditTenderName);
 }
+
 //准备审计
 function prepareAudit(thisObj) {
     //发送要审计的招标方名称以及标的编号
     let thisBidCode = thisObj.parentElement.parentElement.parentElement.childNodes[1].innerText
-    let data = { "tenderName": auditTenderName, "bidCode": thisBidCode };
-    let jsonData = { "act": "prepareAudit", "data": data };
+    let data = {"tenderName": auditTenderName, "bidCode": thisBidCode};
+    let jsonData = {"act": "prepareAudit", "data": data};
     sendJson(jsonData, callbackPrepareAudit);
     //跳转到审计结果页
     document.getElementById("auditTabSearch").classList.remove("layui-this");
@@ -512,6 +629,7 @@ function prepareAudit(thisObj) {
     document.getElementById("auditTabResult").classList.add("layui-this");
     document.getElementById("auditTabItemResult").classList.add("layui-show");
 }
+
 //回调 开始审计，接收标的信息
 function callbackPrepareAudit(json) {
     console.log(json);
@@ -527,11 +645,13 @@ function callbackPrepareAudit(json) {
     auditStart = true;
     startAudit();
 }
+
 //加载审计结果
 function startAudit() {
-    let jsonData = { "act": "startAudit", "auditStart": auditStart };
+    let jsonData = {"act": "startAudit", "auditStart": auditStart};
     sendJson(jsonData, callbackStartAudit);
 }
+
 //回调 加载审计结果
 function callbackStartAudit(json) {
     console.log(json)
@@ -546,6 +666,7 @@ function callbackStartAudit(json) {
     }
     auditLog.scrollTop = auditLog.scrollHeight;
 }
+
 //打开用户信息页
 function openAccountInfoLayer() {
     layer.open({

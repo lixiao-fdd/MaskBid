@@ -78,7 +78,8 @@ public class Account {
         // 随机生成非国密公私钥对
         cryptoKeyPair = cryptoSuite.createKeyPair();
         // save keys
-        sk = cryptoKeyPair.getHexPrivateKey();
+        this.sk = cryptoKeyPair.getHexPrivateKey();
+        this.pk = cryptoKeyPair.getHexPublicKey();
 //        cryptoKeyPair.storeKeyPairWithPem(pemAccountFilePath);
         System.out.println("Account is created");
     }
@@ -106,6 +107,7 @@ public class Account {
         client.getCryptoSuite().createKeyPair(sk);
         cryptoKeyPair = client.getCryptoSuite().getCryptoKeyPair();
         this.pk = cryptoKeyPair.getHexPublicKey();
+        this.sk = cryptoKeyPair.getHexPrivateKey();
         this.address = cryptoKeyPair.getAddress();
         this.contract = SBid.load(contractAddress, client, cryptoKeyPair);//加载合约
         return true;
