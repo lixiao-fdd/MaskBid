@@ -4,8 +4,8 @@
 -1831299051 D:\dev\projects\MaskBid\Core\src\CMakeLists.txt
 -1831291127 D:\dev\projects\MaskBid\Core\src\global.cpp
 -1489195645 D:\dev\projects\MaskBid\Core\src\global.h
--273701234 D:\dev\projects\MaskBid\Core\src\main.cpp
--1903578980 D:\dev\projects\MaskBid\Core\src\
+235097897 D:\dev\projects\MaskBid\Core\src\main.cpp
+-1195180867 D:\dev\projects\MaskBid\Core\src\
 513690231 D:\dev\projects\MaskBid\Core\src\0base\base.h
 -876853932 D:\dev\projects\MaskBid\Core\src\0base\Cipher_elg.cpp
 2067679021 D:\dev\projects\MaskBid\Core\src\0base\Cipher_elg.h
@@ -33,9 +33,9 @@
 -431417107 D:\dev\projects\MaskBid\Core\src\1Pedersen\Pedersen.cpp
 1633120537 D:\dev\projects\MaskBid\Core\src\1Pedersen\Pedersen.h
 -1433696974 D:\dev\projects\MaskBid\Core\src\1Pedersen\
-1785363173 D:\dev\projects\MaskBid\Core\src\2cipherGen\cipherGen.cpp
+-881989547 D:\dev\projects\MaskBid\Core\src\2cipherGen\cipherGen.cpp
 -1831229847 D:\dev\projects\MaskBid\Core\src\2cipherGen\cipherGen.h
-1097903880 D:\dev\projects\MaskBid\Core\src\2cipherGen\
+-1090532700 D:\dev\projects\MaskBid\Core\src\2cipherGen\
 57279996 D:\dev\projects\MaskBid\Core\src\2compare\compare.cpp
 408878268 D:\dev\projects\MaskBid\Core\src\2compare\compare.h
 -949263910 D:\dev\projects\MaskBid\Core\src\2compare\
@@ -58,9 +58,9 @@
 -1831308193 D:\dev\projects\MaskBid\Core\src\2shuffle\Verifier_toom.cpp
 -863091040 D:\dev\projects\MaskBid\Core\src\2shuffle\Verifier_toom.h
 492842195 D:\dev\projects\MaskBid\Core\src\2shuffle\
--1586966440 D:\dev\projects\MaskBid\Core\src\3sBid\sBid.cpp
+-1747225451 D:\dev\projects\MaskBid\Core\src\3sBid\sBid.cpp
 646090516 D:\dev\projects\MaskBid\Core\src\3sBid\sBid.h
-690548090 D:\dev\projects\MaskBid\Core\src\3sBid\
+-161400477 D:\dev\projects\MaskBid\Core\src\3sBid\
 -1831280359 D:\dev\projects\MaskBid\Core\src\3server\server.cpp
 -1831299051 D:\dev\projects\MaskBid\Core\src\3server\server.h
 -861783022 D:\dev\projects\MaskBid\Core\src\3server\

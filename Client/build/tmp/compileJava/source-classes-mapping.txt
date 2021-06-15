@@ -1,3 +1,9 @@
+org/sBid/FileToByteArrayHelper.java
+ org.sBid.FileToByteArrayHelper
+org/sBid/Tender.java
+ org.sBid.Tender
+org/sBid/Parameters.java
+ org.sBid.Parameters
 org/sBid/SBid.java
  org.sBid.SBid
  org.sBid.SBid$1
@@ -73,28 +79,29 @@ org/sBid/SBid.java
  org.sBid.SBid$RemoveTableTenderResultEventResponse
  org.sBid.SBid$UpdateTableRegisterResultEventResponse
  org.sBid.SBid$UpdateTableTenderResultEventResponse
-org/sBid/FileToByteArrayHelper.java
- org.sBid.FileToByteArrayHelper
-org/sBid/Tender.java
- org.sBid.Tender
-org/sBid/MaskBid.java
- org.sBid.MaskBid
-org/sBid/Communicate.java
- org.sBid.Communicate
-org/sBid/Parameters.java
- org.sBid.Parameters
-org/sBid/AmopCB.java
- org.sBid.AmopCB
-org/sBid/Global.java
- org.sBid.Global
-org/sBid/Register.java
- org.sBid.Register
-org/sBid/Files.java
- org.sBid.Files
 org/sBid/AmopResponseCB.java
  org.sBid.AmopResponseCB
+org/sBid/MaskBid.java
+ org.sBid.MaskBid
+org/sBid/AmopCB.java
+ org.sBid.AmopCB
+org/sBid/Register.java
+ org.sBid.Register
+org/sBid/Global.java
+ org.sBid.Global
+org/sBid/Communicate.java
+ org.sBid.Communicate
+org/sBid/Files.java
+ org.sBid.Files
+org/sBid/AuditProcesser.java
+ org.sBid.AuditProcesser
+org/sBid/BidManager.java
+ org.sBid.BidItem
+ org.sBid.BidManager
 org/sBid/Account.java
  org.sBid.Account
+org/sBid/BidProcesser.java
+ org.sBid.BidProcesser
 org/sBid/SBidBC.java
  org.sBid.SBidBC
 org/sBid/MaskBidServer.java

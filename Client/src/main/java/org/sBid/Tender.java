@@ -25,9 +25,9 @@ public class Tender {
     public boolean insert() {
         try {
             table_sBid_name = "Tender_" + this.name;
-            System.out.println("@".repeat(20));
-            System.out.println("contract: " + contract + "\n" + "Table_Tender_Name: " + Table_Tender_Name + "\n" + "name: " + name + "\n" + "table_sBid_name: " + table_sBid_name);
-            System.out.println("@".repeat(20));
+//            System.out.println("@".repeat(20));
+//            System.out.println("contract: " + contract.getContractAddress() + "\n" + "Table_Tender_Name: " + Table_Tender_Name + "\n" + "tenderName: " + name + "\n" + "table_sBid_name: " + table_sBid_name);
+//            System.out.println("@".repeat(20));
             TransactionReceipt receipt = contract.insert_table_tender(Table_Tender_Name, name, table_sBid_name);
             List<SBid.InsertTableTenderResultEventResponse> response = contract.getInsertTableTenderResultEvents(receipt);//回执
             if (!response.isEmpty()) {
@@ -38,7 +38,7 @@ public class Tender {
             e.printStackTrace();
             return false;
         }
-        System.err.println("insert event log not found, maybe transaction not exec.");
+//        System.err.println("insert event log not found, maybe transaction not exec.");
         return false;
     }
 
@@ -49,7 +49,7 @@ public class Tender {
             bidCounts = result.getValue2();
             table_sBid_name = result.getValue3();
         } catch (Exception e) {
-            System.err.println("Can not read tender Info: " + e.getMessage());
+            System.err.println("Can not read " + name + ", Info: " + e.getMessage());
 //            e.printStackTrace();
             return false;
         }

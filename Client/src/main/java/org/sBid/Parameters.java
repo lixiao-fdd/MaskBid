@@ -42,9 +42,6 @@ public class Parameters {
                 bidName = value[7];
                 table_register_name = "Reg_" + name;
             }
-            System.out.println("@".repeat(20));
-            System.out.println("Table_SBid_Name: " + Table_SBid_Name + "\n" + "name: " + name);
-            System.out.println("@".repeat(20));
             //insert sBid parameters
             List<BigInteger> parameters = List.of(counts, p, q, h, g);
             List<String> info = List.of(dateStart, dateEnd, bidName, table_register_name);
@@ -63,11 +60,10 @@ public class Parameters {
 
     //Read parameters
     public boolean read() {
+//        System.out.println("@".repeat(20));
+//        System.out.println("Table_SBid_Name: " + Table_SBid_Name + "\n" + "bidCode: " + name);
+//        System.out.println("@".repeat(20));
         try {
-            System.out.println("@".repeat(30));
-            System.out.println("Para TenderName: " + Table_SBid_Name);
-            System.out.println("Para BidCode: " + name);
-            System.out.println("@".repeat(30));
             Tuple3<String, List<BigInteger>, List<String>> result = contract.select_table_sBid(Table_SBid_Name, name);
             counts = result.getValue2().get(0);
             p = result.getValue2().get(1);
@@ -81,8 +77,8 @@ public class Parameters {
             bidName = result.getValue3().get(4);
             table_register_name = result.getValue3().get(5);
         } catch (Exception e) {
-            System.err.println("Bid " + name + "does not exist: " + e.getMessage());
-//            e.printStackTrace();
+            System.err.println("Bid " + name + " does not exist: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
         return true;

@@ -25,7 +25,7 @@ int main(int argc, char** argv)
 		}
 	}
 	else {
-		while ((ch = getopt(argc, argv, "b:v:d:r:gt")) != -1)
+		while ((ch = getopt(argc, argv, "b:v:d:r:g")) != -1)
 		{
 			switch (ch)
 			{
@@ -116,21 +116,6 @@ int main(int argc, char** argv)
 					setbuf(stdout, NULL);
 					sbid.registration(optarg);
 					fclose(stdout);
-					break;
-				}
-				case 't': {//for test
-					/*Server server;
-					server.start();*/
-					int port = 18000;
-					Network network;
-					network.start(port);
-					network.acceptConnect();
-					string connent;
-					//string fileName = "proveCompare2-R1.txt";
-					//network.fReceive(fileName);
-					string fileName = "/home/qqy/projects/sBid/demo/bin/1/files_1/proveCompare2-R1.txt";
-					network.fSend(fileName);
-					cout << connent << endl;
 					break;
 				}
 				case 'd': {

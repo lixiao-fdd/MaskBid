@@ -31,6 +31,23 @@ a {
 }
 
 /* 登录页 */
+.loading {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    background-color: #ecf0f1;
+    z-index: 8888;
+}
+
+.loadingSVG {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px;
+}
 
 .login .layui-form-item {
     text-align: center;
@@ -72,7 +89,7 @@ i#loginSettingButton {
     height: 30px;
     width: 30px;
     text-align: center;
-    transform: rotate( 0deg);
+    transform: rotate(0deg);
     transition: all 0.4s ease-in-out;
     line-height: 30px;
 }
@@ -253,7 +270,7 @@ button#signup {
     margin-bottom: 0;
 }
 
-.layui-form-radio:hover *, .layui-form-radioed, .layui-form-radioed>i {
+.layui-form-radio:hover *, .layui-form-radioed, .layui-form-radioed > i {
     color: #db261c;
 }
 
@@ -264,7 +281,12 @@ button#signup {
 
 /* tender */
 
-.layui-body>.layui-tab-content {
+.layui-panel{
+    margin: 15px!important;
+    padding: 10px!important;
+}
+
+.layui-body > .layui-tab-content {
     padding: 0;
 }
 
@@ -297,7 +319,7 @@ ul.layui-tab-title {
     font-size: 16px;
 }
 
-.layui-tab-brief>.layui-tab-more li.layui-this:after, .layui-tab-brief>.layui-tab-title .layui-this:after {
+.layui-tab-brief > .layui-tab-more li.layui-this:after, .layui-tab-brief > .layui-tab-title .layui-this:after {
     height: 52px;
 }
 
@@ -350,19 +372,19 @@ ul.layui-tab-title {
 }
 
 .bidDetailBox, .accountInfoBox, .loginSettingBox {
-    display: none!important;
+    display: none !important;
 }
 
 .bidDetailBox.layui-layer-wrap, .accountInfoBox.layui-layer-wrap, .loginSettingBox.layui-layer-wrap {
-    display: block!important;
+    display: block !important;
 }
 
 td.tableOut {
-    padding: 0!important;
+    padding: 0 !important;
 }
 
 .tableIn {
-    margin: 0!important;
+    margin: 0 !important;
 }
 
 .bidDetailInfo td {
@@ -401,7 +423,7 @@ td.tableOut {
     position: absolute;
     right: 0;
     top: 0;
-    margin-right: 0!important;
+    margin-right: 0 !important;
 }
 
 .auditSearchButton button.layui-btn {
@@ -451,9 +473,27 @@ textarea#auditLog::-webkit-scrollbar-thumb {
 textarea#auditLog::-webkit-scrollbar-corner {
     background-color: #282c34;
 }
-.bidPostForm{
+
+.bidPostForm {
     margin-top: 20px;
 }
+
 .bidPostFormButton {
     text-align: right;
+}
+
+/*浏览器*/
+.layui-table.explorerOverview th{
+    font-size: 20px!important;
+    /*border: none!important;*/
+    background-color: #fff!important;
+    text-align: center!important;
+}
+.layui-table.explorerOverview td{
+    font-size: 28px!important;
+    /*border: none!important;*/
+    text-align: center!important;
+}
+.layui-table.tableCenter td,.layui-table.tableCenter th{
+    text-align: center;
 }

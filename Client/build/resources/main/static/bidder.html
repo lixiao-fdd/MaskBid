@@ -30,10 +30,12 @@
     <div class="layui-side layui-bg-black">
         <div class="layui-side-scroll">
             <ul class="layui-nav layui-nav-tree" lay-filter="test">
-                <li class="layui-nav-item"><a tabId="bidderBidAdmin" class="layui-this"
-                                              onclick="switchPage(this)">投标</a>
+                <li class="layui-nav-item">
+                    <a tabId="bidderBidAdmin" class="layui-this" onclick="switchPage(this)" id="sideAdmin">投标</a>
                 </li>
-                <li class="layui-nav-item"><a tabId="bidderBidAudit" onclick="switchPage(this)">审计</a></li>
+                <li class="layui-nav-item">
+                    <a tabId="bidderBidAudit" onclick="switchPage(this)" id="sideAudit">审计</a>
+                </li>
             </ul>
         </div>
     </div>
@@ -47,7 +49,7 @@
                     <ul class="layui-tab-title">
                         <li id="bidTabSearch" class="layui-this">标的检索</li>
                         <!-- <li id="bidTabResult">投标中心</li> -->
-                        <li id="bidTabBidOngoing" onclick="loadBidderTableBidOngoing()">进行中的</li>
+                        <li id="bidTabBidOngoing" onclick="loadBidderTableBidOngoing()">等待中的</li>
                         <li id="bidTabBidFinish" onclick="loadBidderTableBidFinished()">已结束的</li>
                     </ul>
                     <div class="layui-tab-content">
@@ -147,8 +149,6 @@
                                 </tr>
                                 </tbody>
                             </table>
-                            <!-- 标的投标表 -->
-                            <table id="tableBidAuditRegInfo" lay-filter="bidAuditRegInfo"></table>
                             <!-- 审计日志框 -->
                             <form class="layui-form layui-form-pane layui-hide" id="auditLogBox">
                                 <div class="layui-form-item layui-form-text">

@@ -4,6 +4,8 @@ let auditTenderName;
 let bidTenderName;
 let auditStart;
 let bidderPostBidIndex;
+let accountName;
+let accountRole;
 
 //创建JSON
 function sendJson(jsonData, functionName) {
@@ -54,7 +56,16 @@ function tenderStarter() {
     layui.use('form', function () {
         var form = layui.form;
         form.on('submit(postBid)', function (data) {
-            postNewBid(data.field, newBidDataStartValue);
+            layer.open({
+                title: '注意'
+                , content: '是否确认发布标的？'
+                , btn: ['确认发布', '返回']
+                , yes: function (index, layero) {
+                    // console.log(data.field);
+                    postNewBid(data.field, newBidDataStartValue);
+                    layer.close(index);
+                }
+            });
             return false; //阻止表单跳转
         });
         form.verify({
@@ -118,6 +129,50 @@ function tenderStarter() {
             }
         });
     });
+    //区块链概览
+    getChainInfo();
+    table.init('tableTrans', {
+        limit: 1000 //注意：请务必确保 limit 参数（默认：10）是与你服务端限定的数据条数一致
+    });
+    //关闭加载页面
+    document.getElementsByClassName("loading")[0].classList.add("layui-hide");
+}
+
+function getChainInfo() {
+    let jsonData = {"act": "getChainInfo"};
+    sendJson(jsonData, callbackGetChainInfo);
+    setTimeout("getChainInfo()", 5000);
+}
+
+//区块链浏览器显示
+function callbackGetChainInfo(json) {
+    // console.log(json);
+    document.getElementById("explorerBlockNumber").innerText = json.data.blockNumber;
+    document.getElementById("explorerTxSum").innerText = json.data.txSum;
+    document.getElementById("explorerNodeCounts").innerText = json.data.nodeCounts;
+    let tabBlock = document.getElementById("tableBlock");
+    tabBlock.innerHTML = "";
+    for (let j = 0; j < 10; j++) {
+        let trBlock = tabBlock.insertRow();
+        trBlock.insertCell(0).innerText = json.data.topBlock[j].date;
+        trBlock.insertCell(1).innerText = json.data.topBlock[j].number;
+        trBlock.insertCell(2).innerText = json.data.topBlock[j].transCounts;
+        trBlock.insertCell(3).innerText = json.data.topBlock[j].hash;
+    }
+    // table.init('tableBlock', {});
+    let tabTrans = document.getElementById("tableTrans");
+    tabTrans.innerHTML = "";
+    console.log(json.data.topTrans.length);
+    for (let j = 0; j < json.data.topTrans.length; j++) {
+        let trTrans = tabTrans.insertRow();
+        trTrans.insertCell(0).innerText = json.data.topTrans[j].date;
+        trTrans.insertCell(1).innerText = json.data.topTrans[j].from;
+        trTrans.insertCell(2).innerText = json.data.topTrans[j].to;
+        trTrans.insertCell(3).innerText = json.data.topTrans[j].hash;
+    }
+    table.init('tableTrans', {
+        limit: 1000 //注意：请务必确保 limit 参数（默认：10）是与你服务端限定的数据条数一致
+    });
 }
 
 //获取账户信息
@@ -149,14 +204,14 @@ function bidderStarter() {
         form.on('submit(postBidAmount)', function (data) {
             layer.open({
                 title: '注意'
-                , content: '投标金额提交后不可修改，请在竞标开始前点击准备竞标按钮，是否确认提交投标？'
+                , content: '投标金额后提交不可修改，是否确认提交投标？'
                 , btn: ['确认提交', '返回']
                 , yes: function (index, layero) {
                     console.log(data.field);
                     postBidAmount(data.field);
                     layer.close(index);
                     document.getElementById("bidPostFormID").reset();
-                    // layer.load(2);
+                    layer.load(2);
                 }
             });
             return false; //阻止表单跳转
@@ -188,12 +243,13 @@ function bidderStarter() {
             }
         });
     });
-
 }
 
 //回调 获取账户信息
 function callbackListAccountInfo(json) {
-    console.log(json);
+    // console.log(json);
+    accountName = json.data.accountName;
+    accountRole = json.data.accountRole;
     document.getElementById("mainTitleAccountName").innerHTML = json.data.accountName + document.getElementById("mainTitleAccountName").innerHTML;
     document.getElementById("accountInfoName").innerText = json.data.accountName;
     document.getElementById("accountInfoRole").innerText = json.data.accountRole;
@@ -248,6 +304,14 @@ function loadTableBidFinished() {
                 align: "center",
                 unresize: true,
                 templet: '<div><a href="javascript:;" onclick="showBidDetail(this)">详细信息</a></div>'
+            }, {
+                field: 'audit',
+                title: '',
+                width: 60,
+                fixed: 'right',
+                align: "center",
+                unresize: true,
+                templet: '<div><a href="javascript:;" onclick="prepareAuditInFinish(this)">审计</a></div>'
             }
         ]]
         , size: 'lg '
@@ -301,7 +365,7 @@ function loadTableAuditBidList(tenderName) {
         ]]
         , size: 'lg '
         , text: {
-            none: '该招标方暂无标的'
+            none: '该招标方暂无可进行审计的标的'
         }
     });
 }
@@ -329,7 +393,7 @@ function loadTableBidsList(tenderName) {
         ]]
         , size: 'lg '
         , text: {
-            none: '该招标方暂无标的'
+            none: '该招标方暂无进行中的标的'
         }
     });
 }
@@ -354,7 +418,7 @@ function loadBidderTableBidOngoing() {
                 fixed: 'right',
                 align: "center",
                 unresize: true,
-                templet: '<div><a href="javascript:;" onclick="prepareBid(this)">准备竞标</a></div>'
+                templet: '<div><a href="javascript:;" onclick="showBidderBidDetail(this)">详细信息</a></div>'
             }
         ]]
         , size: 'lg '
@@ -385,6 +449,14 @@ function loadBidderTableBidFinished() {
                 align: "center",
                 unresize: true,
                 templet: '<div><a href="javascript:;" onclick="showBidderBidDetail(this)">详细信息</a></div>'
+            }, {
+                field: 'audit',
+                title: '',
+                width: 60,
+                fixed: 'right',
+                align: "center",
+                unresize: true,
+                templet: '<div><a href="javascript:;" onclick="prepareAuditInFinish(this)">审计</a></div>'
             }
         ]]
         , size: 'lg '
@@ -394,16 +466,17 @@ function loadBidderTableBidFinished() {
     });
 }
 
-//渲染审计标的投标者表格
+//审计 渲染审计标的投标者表格
 function loadTableBidAuditRegInfo() {
     document.getElementById("auditLogBox").classList.remove("layui-hide");
     table.render({
         elem: '#tableBidAuditRegInfo'
+        , id: 'tableBidAuditRegInfoID'
         , url: '/table' //数据接口
         , headers: {"tableType": 'BidAuditRegInfo'}
         , page: false //开启分页
         , cols: [[ //表头
-            {field: 'bidderIndex', title: '编号', sort: true, unresize: true, width: 90, align: "center"}
+            {field: 'bidderIndex', title: '编号', sort: true, unresize: true, width: 100, align: "center"}
             , {field: 'bidderName', title: '投标机构名称', width: 500, unresize: true}
             , {field: 'bidderPk', title: '投标机构公钥', minWidth: 120, unresize: true}
             , {field: 'bidderResults', title: '投标结果', sort: true, width: 110, align: "center", unresize: true}
@@ -423,11 +496,13 @@ function showBidDetail(thisObj) {
     let data = {"tenderName": document.getElementById("mainTitleAccountName").innerText, "bidCode": thisBidCode};
     let jsonData = {"act": "showBidDetail", "data": data};
     sendJson(jsonData, callbackShowBidDetail);
+    layer.load(2);
 }
 
 //回调 查看标的的详细信息
 function callbackShowBidDetail(json) {
-    console.log(json);
+    // console.log(json);
+    layer.closeAll('loading');
     loadTableBidRegInfo();
     document.getElementById("bidName").innerText = json.data.bidName;
     document.getElementById("bidCounts").innerText = json.data.bidCounts;
@@ -458,11 +533,13 @@ function showBidderBidDetail(thisObj) {
     let data = {"tenderName": thisTenderName, "bidCode": thisBidCode};
     let jsonData = {"act": "showBidDetail", "data": data};
     sendJson(jsonData, callbackShowBidderBidDetail);
+    layer.load(2);
 }
 
 //回调 投标者 查看标的的详细信息
 function callbackShowBidderBidDetail(json) {
-    console.log(json);
+    // console.log(json);
+    layer.closeAll('loading');
     document.getElementById("bidName").innerText = json.data.bidName;
     document.getElementById("bidCounts").innerText = json.data.bidCounts;
     document.getElementById("bidCode").innerText = json.data.bidCode;
@@ -498,12 +575,15 @@ function postNewBid(data, date) {
     data.newBidDateStart = date.year + "年" + date.month + "月" + date.date + "日 " + date.hours + "时" + date.minutes + "分";
     let jsonFormData = {"act": "postNewBid", "data": data};
     sendJson(jsonFormData, callbackPostNewBid);
+    layer.load(2);
 }
 
 //回调 发布标的
 function callbackPostNewBid(json) {
-    console.log(json);
+    // console.log(json);
+    layer.closeAll('loading');
     loadTableBidOngoing();
+    document.getElementById("postBidForm").reset();
     document.getElementById("tableBidPostTab").classList.remove("layui-this");
     document.getElementById("tableBidPostItem").classList.remove("layui-show");
     document.getElementById("tableBidOngoingTab").classList.add("layui-this");
@@ -525,11 +605,13 @@ function loadBid(thisObj) {
     let data = {"tenderName": bidTenderName, "bidCode": thisBidCode};
     let jsonData = {"act": "loadBid", "data": data};
     sendJson(jsonData, callbackLoadBid);
+    layer.load(2);
 }
 
 //回调 加载标的
 function callbackLoadBid(json) {
-    console.log(json);
+    // console.log(json);
+    layer.closeAll('loading');
     document.getElementById("bidInfoTenderName").innerText = json.data.bidInfoTenderName;
     document.getElementById("bidInfoBidName").innerText = json.data.bidInfoBidName;
     document.getElementById("bidInfoBidCode").innerText = json.data.bidInfoBidCode;
@@ -558,11 +640,13 @@ function postBidAmount(data) {
     let jsonData = {"tenderName": tenderName, "bidCode": bidCode, "bidAmount": data.postBidAmount}
     let jsonFormData = {"act": "postBidAmount", "data": jsonData};
     sendJson(jsonFormData, callbackPostBidAmount);
+    layer.load(2);
 }
 
 //回调 发布投标
 function callbackPostBidAmount(json) {
-    console.log(json);
+    // console.log(json);
+    layer.closeAll('loading');
     if (json.data.postBidStatus) {
         //跳转到投标页
         layer.close(bidderPostBidIndex);
@@ -573,8 +657,8 @@ function callbackPostBidAmount(json) {
         document.getElementById("bidTabItemOngoing").classList.add("layui-show");
     } else {
         layer.open({
-            title: '注意'
-            , content: '您已提交投标，请勿重复投标'
+            title: '投标失败'
+            , content: '可能的原因：\n1、重复投标 \n2、标的已结束 \n3、标的时间冲突(一分钟内仅可同时进行一项竞标)'
         });
         layer.close(bidderPostBidIndex);
     }
@@ -600,7 +684,8 @@ function prepareBid(thisObj) {
 
 //回调 准备竞标
 function callbackPrepareBid(json) {
-    console.log(json);
+    // console.log(json);
+    // layer.closeAll('loading');
     let bidResult = (json.data.bidResult) ? "恭喜您中标了！" : "很遗憾未能中标。";
     layer.open({
         title: '竞标结束'
@@ -619,7 +704,7 @@ function auditSearchBid(data) {
 //准备审计
 function prepareAudit(thisObj) {
     //发送要审计的招标方名称以及标的编号
-    let thisBidCode = thisObj.parentElement.parentElement.parentElement.childNodes[1].innerText
+    let thisBidCode = thisObj.parentElement.parentElement.parentElement.childNodes[1].innerText;
     let data = {"tenderName": auditTenderName, "bidCode": thisBidCode};
     let jsonData = {"act": "prepareAudit", "data": data};
     sendJson(jsonData, callbackPrepareAudit);
@@ -628,22 +713,52 @@ function prepareAudit(thisObj) {
     document.getElementById("auditTabItemSearch").classList.remove("layui-show");
     document.getElementById("auditTabResult").classList.add("layui-this");
     document.getElementById("auditTabItemResult").classList.add("layui-show");
+    layer.load(2);
+}
+
+function prepareAuditInFinish(thisObj) {
+    console.log(thisObj);
+    //发送要审计的招标方名称以及标的编号
+    let thisBidCode;
+    let thisTenderName;
+    if (accountRole == '招标方') {
+        thisTenderName = accountName;
+        thisBidCode = thisObj.parentElement.parentElement.parentElement.childNodes[1].innerText;
+    } else {
+        thisTenderName = thisObj.parentElement.parentElement.parentElement.childNodes[0].innerText;
+        thisBidCode = thisObj.parentElement.parentElement.parentElement.childNodes[2].innerText;
+    }
+    let data = {"tenderName": thisTenderName, "bidCode": thisBidCode};
+    let jsonData = {"act": "prepareAudit", "data": data};
+    sendJson(jsonData, callbackPrepareAudit);
+    //跳转到审计结果页
+    document.getElementById("sideAudit").click();
+    document.getElementById("auditTabResult").click();
+    layer.load(2);
 }
 
 //回调 开始审计，接收标的信息
 function callbackPrepareAudit(json) {
-    console.log(json);
-    //渲染标的参与者表格
-    loadTableBidAuditRegInfo();
-    document.getElementById("auditInfoBidName").innerText = json.data.auditInfoBidName;
-    document.getElementById("auditInfoBidContent").innerText = json.data.auditInfoBidContent;
-    document.getElementById("auditInfoBidCode").innerText = json.data.auditInfoBidCode;
-    document.getElementById("auditInfoBidCounts").innerText = json.data.auditInfoBidCounts;
-    document.getElementById("auditInfoBidResult").innerText = json.data.auditInfoBidResult;
-    //开审计并打印日志
-    document.getElementById("auditLog").value = "------------ audit start ------------ \n";
-    auditStart = true;
-    startAudit();
+    // console.log(json);
+    layer.closeAll('loading');
+    if (json.data.auditable) {
+        //渲染标的参与者表格
+        loadTableBidAuditRegInfo();
+        document.getElementById("auditInfoBidName").innerText = json.data.auditInfoBidName;
+        document.getElementById("auditInfoBidContent").innerText = json.data.auditInfoBidContent;
+        document.getElementById("auditInfoBidCode").innerText = json.data.auditInfoBidCode;
+        document.getElementById("auditInfoBidCounts").innerText = json.data.auditInfoBidCounts;
+        document.getElementById("auditInfoBidResult").innerText = json.data.auditInfoBidResult;
+        //开审计并打印日志
+        document.getElementById("auditLog").value = "------------ audit start ------------ \n";
+        auditStart = true;
+        startAudit();
+    } else {
+        layer.open({
+            title: '审计失败'
+            , content: '标的流标，或还未结束'
+        });
+    }
 }
 
 //加载审计结果
@@ -654,15 +769,20 @@ function startAudit() {
 
 //回调 加载审计结果
 function callbackStartAudit(json) {
-    console.log(json)
     auditStart = false;
     let auditLog = document.getElementById("auditLog");
     auditLog.value = auditLog.value + json.data.log;
     if (json.data.finishStatus == false)
         startAudit()
     else if (json.data.finishStatus == true) {
-        console.log(json.data.auditResult);//应为数组
         document.getElementById("auditLog").value = document.getElementById("auditLog").value + "\n------------ audit finish ------------ \n";
+        document.getElementById("auditInfoBidResult").innerText = (json.data.auditResult) ? "审计通过" : "审计失败";
+        if (accountRole == "招标方") {
+            let tableItems = document.getElementById("auditTabItemResult").children[2].children[0].children[1].children[0].children[0];
+            for (let i = 0; i < json.data.auditBidderResult.length; i++) {
+                tableItems.children[i].children[4].children[0].innerHTML = (json.data.auditBidderResult[i]) ? '通过' : '失败';
+            }
+        }
     }
     auditLog.scrollTop = auditLog.scrollHeight;
 }

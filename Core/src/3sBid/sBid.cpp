@@ -88,7 +88,7 @@ void SBid::verify() {
 }
 //读取群的参数并生成群
 void SBid::readParameters() {
-	filesPath = "./files_" + codes[0] + "/";
+	filesPath = "./coreFile/";
 	if (access(filesPath.c_str(), 0)) {
 		mkdir(filesPath.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 		cout << "[" << codes[0] << "] - " << "created: " << filesPath << endl;
@@ -221,7 +221,7 @@ void SBid::pkExchange() {
 }
 //加密并生成证明
 void SBid::ciphertextOp() {
-	
+
 	CipherGen cipherGen(codes, round, bigMe);
 	cipherGen.gen(ciphertext, plaintext, ranZero, ran_1);//生成密文( h^r , g^m × y^r )
 
@@ -237,10 +237,10 @@ bool SBid::ciphertextVerify() {
 }
 //比较并生成证明
 void SBid::compareOp() {
-	
+
 	Compare compare(codes, round, plaintext, ciphertext, ran_1, ranZero, bigMe);
 	compare.compare();
-	
+
 	compare.prove();
 }
 //验证比较
@@ -254,11 +254,11 @@ bool SBid::compareVerify() {
 }
 //混淆并生成证明
 void SBid::shuffleOp() {
-	
+
 	Shuffle prover(codes, round);
 	prover.creatProver(bigMe);
 	prover.shuffle();
-	
+
 	prover.prove();
 }
 //验证混淆
@@ -360,7 +360,12 @@ void SBid::decrypt(array<string, 3> paras) {
 	temp = InvMod(cipher_amount.get_u(), mod);
 	temp = PowerMod(temp, sk, mod);
 	temp = MulMod(temp, cipher_amount.get_v(), mod);
-	string fileName = "./plaintextAmount.txt";
+	string decriptPath = "./decrypt/";
+	if (access(decriptPath.c_str(), 0)) {
+		mkdir(decriptPath.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+		cout << "[" << codes[0] << "] - " << "created: " << decriptPath << endl;
+	}
+	string fileName = decriptPath + "plaintextAmount.txt";
 	ost.open(fileName, ios::out);
 	if (!ost)
 	{
@@ -373,7 +378,7 @@ void SBid::decrypt(array<string, 3> paras) {
 	cout << "decrypt done" << endl;
 	clock_t cEnd = GetTickCount();
 	double cTime = (cEnd - cStart) / (double)CLOCKS_PER_SEC * 1000;
-	cout  << "decrypt " << cTime << " ms" << endl;
+	cout << "decrypt " << cTime << " ms" << endl;
 }
 //接收证明文件压缩包并解压为独立的文件
 void SBid::unzip(array<string, 3> paras) {

@@ -70,18 +70,16 @@ public class Account {
         return false;
     }
 
-    public void createAccount() {
-        //key file path
-//        String pemAccountFilePath = filesPath + name + ".pem";
+    public String createAccount() {
         // 创建非国密类型的CryptoSuite
-        CryptoSuite cryptoSuite = new CryptoSuite(CryptoType.ECDSA_TYPE);
+        CryptoSuite cryptoSuiteTemp = new CryptoSuite(CryptoType.ECDSA_TYPE);
         // 随机生成非国密公私钥对
-        cryptoKeyPair = cryptoSuite.createKeyPair();
+        CryptoKeyPair cryptoKeyPairTemp = cryptoSuiteTemp.createKeyPair();
+        return cryptoKeyPairTemp.getHexPrivateKey();
         // save keys
-        this.sk = cryptoKeyPair.getHexPrivateKey();
-        this.pk = cryptoKeyPair.getHexPublicKey();
-//        cryptoKeyPair.storeKeyPairWithPem(pemAccountFilePath);
-        System.out.println("Account is created");
+//        this.sk = cryptoKeyPair.getHexPrivateKey();
+//        this.pk = cryptoKeyPair.getHexPublicKey();
+//        System.out.println("Account is created");
     }
 
     public boolean loadAccount() {
@@ -156,5 +154,9 @@ public class Account {
 
     public CryptoKeyPair getCryptoKeyPair() {
         return cryptoKeyPair;
+    }
+
+    public Client getClient() {
+        return client;
     }
 }

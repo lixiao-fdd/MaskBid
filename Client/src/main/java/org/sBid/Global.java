@@ -9,6 +9,9 @@ import org.fisco.bcos.sdk.crypto.signature.ECDSASignatureResult;
 import org.fisco.bcos.sdk.model.CryptoType;
 
 import java.io.*;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -141,7 +144,72 @@ public class Global {
         }
     }
 
-    // read registration infomation
+    //读取注册信息
+    public static boolean loadRegInfo(ArrayList<Register> register_table, int counts, String index, Register
+            opponent, SBid contract, String Table_register_name, int round) {
+        // Storage the registration informations and confirm Opponent
+        if (!register_table.isEmpty())
+            register_table.clear();
+        Register firstItem = null, secondItem = null, tempItem = null;
+        boolean byeFlag = true;
+        int animIndex = 0;
+        String waitStr = "Wait No.";
+        String spaceStr = " ".repeat(waitStr.length() + 3);
+        for (int i = 1; i <= counts; i++) {
+            tempItem = new Register(contract, Table_register_name, String.valueOf(i), "");
+            if (tempItem.read()) {//若存在该条注册信息
+                String result = tempItem.getResult();
+                if (result.compareTo("lose") == 0) {//若该参与者已经失败，则跳过
+                    register_table.add(tempItem);
+                } else {//若该参与者还在竞标中
+                    String status = tempItem.getStatus();
+                    if (Integer.parseInt(status) >= round) {//若该参与者与自己处在同一轮（或处于更后的轮次）中
+                        register_table.add(tempItem);
+                        if (firstItem == null)//若配对中前一个位置为空，则直接放入
+                            firstItem = tempItem;
+                        else {//若配对中前一个位置不为空，则放入后一个位置，并开始判断是否为自己与对手
+                            secondItem = tempItem;
+                            if (firstItem.getIndex().compareTo(index) == 0) {//自己在第一个位置，则第二个为对手
+                                opponent.copy(secondItem);
+                                byeFlag = false;//自己出现在配对中则没有轮空
+                            } else if (secondItem.getIndex().compareTo(index) == 0) {//自己在第二个位置，则第一个为对手
+                                opponent.copy(firstItem);
+                                byeFlag = false;
+                            }
+                            firstItem = null;//若自己不在该配对中，则清空配对
+                        }
+                    } else {//若该参与者落后于自己，则等待
+                        try {
+                            animIndex = (animIndex + 1) % 4;
+                            System.out.print(waitStr + (i) + Global.waitAnim.get(animIndex) + "\r");
+                            Thread.sleep(100);
+                            --i;
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            } else {//若不存在该条注册信息，则等待
+                try {
+                    animIndex = (animIndex + 1) % 4;
+                    System.out.print(waitStr + (i) + Global.waitAnim.get(animIndex) + "\r");
+                    Thread.sleep(100);
+                    --i;
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        System.out.print(spaceStr + "\r");
+        System.out.println("+--Registration table ");
+        for (Register temp : register_table) {
+            System.out.format("|  %-3s | %-5s\t| %-4s\n", temp.getIndex(), temp.getName(), temp.getResult());
+        }
+        System.out.println("+--Registration table end ");
+        return byeFlag;//返回是否轮空
+    }
+
+    // 旧 read registration infomation
     public static boolean readRegInfo(ArrayList<Register> register_table, int counts, String index, Register
             opponent, SBid contract, String Table_register_name) {
         // Storage the registration informations and confirm Opponent
@@ -160,7 +228,7 @@ public class Global {
                     register_table.add(tempItem);
                 } else {//若该参与者还在竞标中
                     String status = tempItem.getStatus();
-                    if (status.compareTo(String.valueOf(round)) >= 0) {//若该参与者与自己处在同一轮（或处于更后的轮次）中
+                    if (Integer.parseInt(status) >= round) {//若该参与者与自己处在同一轮（或处于更后的轮次）中
                         register_table.add(tempItem);
                         if (firstItem == null)//若配对中前一个位置为空，则直接放入
                             firstItem = tempItem;
@@ -315,10 +383,34 @@ public class Global {
         return dateNow.compareTo(bidDateStart) > 0;
     }
 
+    //时间解析
+    public static Date getDate(String date) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy年MM月dd日 HH时mm分");
+        Date bidDateStart = new Date();
+        try {
+            bidDateStart = sdf.parse(date);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return bidDateStart;
+    }
+
     //分离招标名陈与招标内容
     public static void getBidNameContent(String nameWithContentBase64, StringBuilder bidName, StringBuilder bidContent) {
         String nameWithContent = Global.baseDecode(nameWithContentBase64);
         bidName.append(nameWithContent, 0, nameWithContent.indexOf("\n"));
         bidContent.append(nameWithContent.substring(nameWithContent.indexOf("\n") + 1));
+    }
+
+    //创建文件夹
+    public static void createFolder(String path) {
+        Path filesDir = Paths.get(path);
+        try {
+            java.nio.file.Files.createDirectory(filesDir);
+        } catch (FileAlreadyExistsException ignored) {
+        } catch (IOException e) {
+            System.err.println("Failed to create " + filesDir);
+            e.printStackTrace();
+        }
     }
 }
