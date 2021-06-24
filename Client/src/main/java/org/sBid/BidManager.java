@@ -18,6 +18,7 @@ public class BidManager {
     private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy年MM月dd日 HH时mm分");
     private final SimpleDateFormat sdfLOG = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
     private TreeSet<BidItem> set = new TreeSet<>();
+    private boolean autorun = false;
 
     //todo 从链上初始化
     public BidManager(Account account, JSONObject storeJson, String realName) {
@@ -77,7 +78,7 @@ public class BidManager {
                         //pk1.txt
                         Global.writeFile(amopFile + "pk" + index + ".txt", bidPk);
                         Global.writeFile(coreFile + "pk" + index + ".txt", bidPk);
-                        insert(bidTenderName, bidBidCode, bidDate, String.valueOf(index), bidAmount);
+                        insert(bidTenderName, bidBidCode, bidDate, String.valueOf(index), bidAmount, false);
                     }
                 }
             }
@@ -95,7 +96,7 @@ public class BidManager {
                 BidItem bidReadyToGo = set.first();
                 Thread bidThread = new Thread(() -> {
                     BidProcesser bidProcesser = new BidProcesser(account, bidReadyToGo.getTender(), bidReadyToGo.getCode(), bidReadyToGo.getIndex(), bidReadyToGo.getAmount());
-                    bidProcesser.ready(bidReadyToGo.getTimestamp());
+                    bidProcesser.ready(bidReadyToGo.getTimestamp(),autorun);
                 });
                 bidThread.start(); // 启动新线程
                 set.remove(set.first());//移除
@@ -108,13 +109,14 @@ public class BidManager {
     }
 
     //插入新的标的
-    public boolean insert(String tender, String code, String dateEnd, String bidIndex, String bidAmount) {
+    public boolean insert(String tender, String code, String dateEnd, String bidIndex, String bidAmount, boolean autorun) {
         Date clock = new Date();
         try {
             clock = sdf.parse(dateEnd);
         } catch (ParseException e) {
             e.printStackTrace();
         }
+        this.autorun=autorun;
         return set.add(new BidItem(tender, code, clock.getTime(), bidIndex, bidAmount));
     }
 

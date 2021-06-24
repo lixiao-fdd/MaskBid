@@ -4,6 +4,8 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.ApplicationArguments;
 import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -48,6 +50,10 @@ public class MaskBidServer {
     private String auditTenderName = "";
     private String auditBidCode = "";
     AuditProcesser auditProcesser;
+    boolean autorun = false;
+
+    @Autowired
+    private ApplicationArguments applicationArguments;
 
     //登录 上传密钥文件
     @ResponseBody
@@ -103,7 +109,6 @@ public class MaskBidServer {
     }
 
     //注册
-    // todo: 同名就不可以加入了
     @ResponseBody
     @GetMapping(value = "/signup")
     public ResponseEntity<byte[]> fileDownload(@RequestParam("newAccountName") String newAccountName, @RequestParam("newAccountRole") String newAccountRole) throws IOException {
@@ -114,7 +119,6 @@ public class MaskBidServer {
             e.printStackTrace();
         }
         StringBuilder mbkFileContent = new StringBuilder();
-//        new SBidBC(newAccountName, newAccountRole, mbkFileContent);
 
         name = newAccountName;
         role = newAccountRole;
@@ -268,6 +272,9 @@ public class MaskBidServer {
                     });
                     bidManagerThread.start(); // 启动新线程
                 }
+                List<String> args = applicationArguments.getOptionValues("autorun");
+                if (args != null)
+                    autorun = Boolean.parseBoolean(args.get(0));
             }
             //发布新的标的（标的名称，标的内容，标的开始时间，标的持续时间，标的持续时间单位）（标的编号）
             case "postNewBid" -> {
@@ -297,6 +304,13 @@ public class MaskBidServer {
                 String bidTenderName = recvJsonData.getString("tenderName");
                 String bidBidCode = recvJsonData.getString("bidCode");
                 sBidBC.loadBidDetail(bidTenderName, bidBidCode, 1, data);
+
+            }
+            case "autoDown" ->{
+                if (autorun) {
+                    System.out.println("Auto Exit");
+                    System.exit(0);
+                }
             }
             //发布投标金额（招标者名称，标的编号，投标金额）（投标结果）
             case "postBidAmount" -> {
@@ -311,23 +325,23 @@ public class MaskBidServer {
                     result = sBidBC.postAmount(bidTenderName, bidBidCode, bidAmount);
                     bidIndex = sBidBC.getMyIndex();
                     if (result) {
-                        bidManager.insert(bidTenderName, bidBidCode, bidDateEnd, bidIndex, bidAmount);
+                        bidManager.insert(bidTenderName, bidBidCode, bidDateEnd, bidIndex, bidAmount, autorun);
                     }
                 }
                 data.put("postBidStatus", result);
             }
             //准备投标（招标者名称，标的编号）（招标者名称，标的编号，竞标结果）
             //delete
-            case "prepareBid" -> {
-                String bidTenderName = recvJsonData.getString("tenderName");
-                String bidBidCode = recvJsonData.getString("bidCode");
-
-                BidProcesser bidProcesser = new BidProcesser(sBidBC.getAccount(), bidTenderName, bidBidCode, sBidBC.getMyIndex(), sBidBC.getBidAmount(bidBidCode));
-                String BidDateEnd = sBidBC.loadBidEndDate(bidTenderName, bidBidCode);
-                data.put("bidTenderName", bidTenderName);
-                data.put("bidBidCode", bidBidCode);
-                data.put("bidResult", bidProcesser.ready(Global.getDate(BidDateEnd).getTime()));
-            }
+//            case "prepareBid" -> {
+//                String bidTenderName = recvJsonData.getString("tenderName");
+//                String bidBidCode = recvJsonData.getString("bidCode");
+//
+//                BidProcesser bidProcesser = new BidProcesser(sBidBC.getAccount(), bidTenderName, bidBidCode, sBidBC.getMyIndex(), sBidBC.getBidAmount(bidBidCode));
+//                String BidDateEnd = sBidBC.loadBidEndDate(bidTenderName, bidBidCode);
+//                data.put("bidTenderName", bidTenderName);
+//                data.put("bidBidCode", bidBidCode);
+//                data.put("bidResult", bidProcesser.ready(Global.getDate(BidDateEnd).getTime()));
+//            }
             //审计结果页 准备审计（招标者名称，标的编号）（标的名称，标的内容，标的编号，投标人数，审计结果）
             case "prepareAudit" -> {
                 auditTenderName = recvJson.getJSONObject("data").getString("tenderName");
@@ -349,7 +363,7 @@ public class MaskBidServer {
                     StringBuilder progress = new StringBuilder();
                     auditProcesser.getProgress(progress);
                     if (auditProcesser.isFinish()) {
-                        data.put("auditResult", true);
+                        data.put("auditResult", auditProcesser.getFinalResult());
                         if (role.compareTo("0") == 0)
                             data.put("auditBidderResult", auditProcesser.getAuditResult());
                     }
@@ -368,8 +382,9 @@ public class MaskBidServer {
             }
             //区块链浏览器
             case "getChainInfo" -> {
-                json.put("time", new Date().toString());
-                sBidBC.getChainInfo(data);
+                json.put("time", new Date().getTime());
+                if (sBidBC != null)
+                    sBidBC.getChainInfo(data);
             }
             default -> {
                 System.err.println("unknown act: " + act);

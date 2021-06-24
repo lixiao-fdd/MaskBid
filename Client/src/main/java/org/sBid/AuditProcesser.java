@@ -28,6 +28,7 @@ public class AuditProcesser {
     private ArrayList<String> output = new ArrayList<>();
     private int outputIndex = 0;
     private boolean isFinish = false;
+    private boolean finalResult;
 
     Parameters parameters;//竞标参数
 
@@ -77,6 +78,7 @@ public class AuditProcesser {
         }
         System.out.println("Finish audit");
         isFinish = true;
+        finalResult = result;
         return result;
     }
 
@@ -195,6 +197,10 @@ public class AuditProcesser {
 
     public ArrayList<Boolean> getAuditResult() {
         return auditResult;
+    }
+
+    public boolean getFinalResult() {
+        return finalResult;
     }
 
     public ArrayList<String> getOutput() {

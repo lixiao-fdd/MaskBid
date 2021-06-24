@@ -8,10 +8,18 @@ import org.fisco.bcos.sdk.crypto.signature.ECDSASignature;
 import org.fisco.bcos.sdk.crypto.signature.ECDSASignatureResult;
 import org.fisco.bcos.sdk.model.CryptoType;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -412,5 +420,89 @@ public class Global {
             System.err.println("Failed to create " + filesDir);
             e.printStackTrace();
         }
+    }
+
+    // AES CBC 加密:
+    public static String encrypt(String keyStr, String inputStr) throws GeneralSecurityException {
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        md.update(keyStr.getBytes(StandardCharsets.UTF_8));
+        byte[] key = md.digest();
+        byte[] input = inputStr.getBytes(StandardCharsets.UTF_8);
+
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
+        // CBC模式需要生成一个16 bytes的initialization vector:
+        SecureRandom sr = SecureRandom.getInstanceStrong();
+        byte[] iv = sr.generateSeed(16);
+        IvParameterSpec ivps = new IvParameterSpec(iv);
+        cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivps);
+        byte[] data = cipher.doFinal(input);
+        // IV不需要保密，把IV和密文一起返回:
+        return Global.byteArrayToHex(join(iv, data));
+    }
+
+    // 解密:
+    public static String decrypt(String keyStr, String inputHex) throws GeneralSecurityException {
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        md.update(keyStr.getBytes(StandardCharsets.UTF_8));
+        byte[] key = md.digest();
+        // 把input分割成IV和密文:
+        byte[] iv = new byte[16];
+        byte[] input = Global.hexToByteArray(inputHex);
+        byte[] data = new byte[input.length - 16];
+        System.arraycopy(input, 0, iv, 0, 16);
+        System.arraycopy(input, 16, data, 0, data.length);
+        // 解密:
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
+        IvParameterSpec ivps = new IvParameterSpec(iv);
+        cipher.init(Cipher.DECRYPT_MODE, keySpec, ivps);
+        return new String(cipher.doFinal(data));
+    }
+
+    private static byte[] join(byte[] bs1, byte[] bs2) {
+        byte[] r = new byte[bs1.length + bs2.length];
+        System.arraycopy(bs1, 0, r, 0, bs1.length);
+        System.arraycopy(bs2, 0, r, bs1.length, bs2.length);
+        return r;
+    }
+
+    //byte数组转hex字符串
+    public static String byteArrayToHex(byte[] bytes) {
+        final String HEX = "0123456789abcdef";
+        StringBuilder sb = new StringBuilder(bytes.length * 2);
+        for (byte b : bytes) {
+            // 取出这个字节的高4位，然后与0x0f与运算，得到一个0-15之间的数据，通过HEX.charAt(0-15)即为16进制数
+            sb.append(HEX.charAt((b >> 4) & 0x0f));
+            // 取出这个字节的低位，与0x0f与运算，得到一个0-15之间的数据，通过HEX.charAt(0-15)即为16进制数
+            sb.append(HEX.charAt(b & 0x0f));
+        }
+
+        return sb.toString();
+    }
+
+    //hex字符串转byte数组
+    public static byte[] hexToByteArray(String inHex) {
+        int hexlen = inHex.length();
+        byte[] result;
+        if (hexlen % 2 == 1) {
+            //奇数
+            hexlen++;
+            result = new byte[(hexlen / 2)];
+            inHex = "0" + inHex;
+        } else {
+            //偶数
+            result = new byte[(hexlen / 2)];
+        }
+        int j = 0;
+        for (int i = 0; i < hexlen; i += 2) {
+            result[j] = hexToByte(inHex.substring(i, i + 2));
+            j++;
+        }
+        return result;
+    }
+
+    public static byte hexToByte(String inHex) {
+        return (byte) Integer.parseInt(inHex, 16);
     }
 }

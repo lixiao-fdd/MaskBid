@@ -74,7 +74,7 @@
                                         <label class="layui-form-label">发起时间</label>
                                         <div class="layui-input-inline">
                                             <input type="text" placeholder="请输入发起时间" class="layui-input"
-                                                   name="newBidDataStart"
+                                                   name="newBidDateStart"
                                                    id="newBidDateStart" lay-verify="required" autocomplete="off">
                                         </div>
                                     </div>
@@ -243,73 +243,33 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- 区块 -->
-<!--                <div class="layui-panel">-->
-<!--                    <div class="layui-card">-->
-<!--                        <div class="layui-card-header">区块(最新生成)</div>-->
-<!--                        <div class="layui-card-body">-->
-<!--                            <table class="layui-table tableCenter" lay-filter="tableBlock">-->
-<!--                                <thead>-->
-<!--                                <tr>-->
-<!--                                    <th lay-data="{field:'blockDate',width:210, unresize: true, align: 'center'}">出块日期-->
-<!--                                    </th>-->
-<!--                                    <th lay-data="{field:'blockNumber', unresize: true, align: 'center'}">区块编号</th>-->
-<!--                                    <th lay-data="{field:'blockTransCounts',width:90, unresize: true, align: 'center'}">交易数量</th>-->
-<!--                                    <th lay-data="{field:'blockHash', unresize: true, align: 'center'}">区块哈希</th>-->
-<!--                                </tr>-->
-<!--                                </thead>-->
-<!--                                <tbody id="tableBlock">-->
-<!--                                </tbody>-->
-<!--                            </table>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
-
-                <!-- 区块 -->
-                <div class="layui-panel">
-                    <div class="layui-card">
-                        <div class="layui-card-header">区块(最新生成)</div>
-                        <div class="layui-card-body">
-                            <table class="layui-table tableCenter">
-<!--                                <colgroup>-->
-<!--                                    <col width="200">-->
-<!--                                    <col width="100">-->
-<!--                                    <col width="100">-->
-<!--                                    <col >-->
-<!--                                </colgroup>-->
-                                <thead>
-                                <tr>
-                                    <th>生成时间</th>
-                                    <th>区块编号</th>
-                                    <th>交易数量</th>
-                                    <th>区块哈希</th>
-                                </tr>
-                                </thead>
-                                <tbody id="tableBlock">
-                                </tbody>
-                            </table>
+                <!-- 图表 -->
+                <div class="layui-panel" id="graphContainerBox">
+                    <div id="graphContainer" style="height: 350px"></div>
+                </div>
+                <div class="layui-row layui-col-space13">
+                    <div class="layui-col-md4">
+                        <div class="layui-panel">
+                            <!-- 区块 -->
+                            <div class="layui-card">
+                                <div class="layui-card-header">区块(最新生成)</div>
+                                <div class="layui-card-body">
+                                    <ul id="chainBlockList">
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- 交易 -->
-                <div class="layui-panel">
-                    <div class="layui-card">
-                        <div class="layui-card-header">交易(最新生成)</div>
-                        <div class="layui-card-body">
-                            <table class="layui-table tableCenter" lay-filter="tableTrans">
-                                <thead>
-                                <tr>
-                                    <th lay-data="{field:'transDate',width:200, unresize: true, align: 'center'}">生成时间</th>
-                                    <th lay-data="{field:'transFrom', unresize: true, align: 'center'}">源账户地址</th>
-                                    <th lay-data="{field:'transTo', unresize: true, align: 'center'}">目的账户地址</th>
-                                    <th lay-data="{field:'transHash', unresize: true, align: 'center'}">交易哈希</th>
-                                </tr>
-                                </thead>
-                                <tbody id="tableTrans">
-                                </tbody>
-                            </table>
+                    <div class="layui-col-md8">
+                        <div class="layui-panel">
+                            <!-- 交易 -->
+                            <div class="layui-card">
+                                <div class="layui-card-header">交易(最新生成)</div>
+                                <div class="layui-card-body">
+                                    <ul id="chainTxList">
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -442,8 +402,8 @@
 
 <script src="./layui.js"></script>
 <script src="./js/jquery.js"></script>
+<script src="./js/echarts.min.js"></script>
 <script src="./js/global.js"></script>
-<script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.1.2/echarts.min.js"></script>
 <script>
     layui.use(['element', 'layer', 'util'], function () {
         var element = layui.element

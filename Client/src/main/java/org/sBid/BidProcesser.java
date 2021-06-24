@@ -30,6 +30,7 @@ public class BidProcesser {
     boolean bigMe;//自己是否为编号较大的一方
     private Communicate publish;//发布AMOP
     private Communicate subscribe;//订阅AMOP
+    private boolean autorun = false;
 
 //  账号文件夹结构
 //  .
@@ -79,7 +80,7 @@ public class BidProcesser {
         register.read();
     }
 
-    public boolean ready(long timestamp) {
+    public boolean ready(long timestamp, boolean autorun) {
         long now = (new Date()).getTime();
         while (timestamp - now > 1000) {
             try {
@@ -90,6 +91,7 @@ public class BidProcesser {
             now = (new Date()).getTime();
         }
         System.out.println("Start at " + new Date());
+        this.autorun = autorun;
         return sBid();
     }
 
@@ -377,6 +379,11 @@ public class BidProcesser {
 //        System.out.println("Amount: " + amount);
 //        Global.readResult(counts, contract, Table_Register_Name);
         System.out.println("\n" + clock.prettyPrint());
+        System.out.println("Auto Run: " + autorun);
+        if (autorun){
+            System.out.println("Auto Exit");
+            System.exit(0);
+        }
         return !loseFlag;
     }
 

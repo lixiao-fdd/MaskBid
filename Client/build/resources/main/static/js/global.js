@@ -6,6 +6,13 @@ let auditStart;
 let bidderPostBidIndex;
 let accountName;
 let accountRole;
+let myChart;
+let option;
+let graphData;
+let graphGrowth;
+let listBlockDeleteCount;
+let listTxDeleteCount;
+let lastValue = undefined;
 
 //创建JSON
 function sendJson(jsonData, functionName) {
@@ -130,10 +137,81 @@ function tenderStarter() {
         });
     });
     //区块链概览
+    graphData = [];
+    graphGrowth = [];
+    listBlockDeleteCount = [];
+    listTxDeleteCount = [];
+    option = {
+        tooltip: {
+            trigger: 'axis',
+            formatter: function (params) {
+                let params1 = params[0];
+                let params2 = params[1];
+                let date = new Date(params1.name);
+                if (params1.value[1] != null)
+                    return date.getFullYear() + '年' + (date.getMonth() + 1) + '月' + date.getDate() + "日 "
+                        + date.getHours() + '时' + date.getMinutes() + '分' + date.getSeconds() + '秒<br/>现有交易数: '
+                        + params1.value[1] + '<br/>新增交易数: ' + params2.value[1];
+                else
+                    return "暂无数据";
+
+            },
+            axisPointer: {
+                animation: false
+            }
+        },
+        xAxis: {
+            type: 'time',
+            splitLine: {
+                show: true
+            },
+            formatter: '{HH}:{mm}:{ss}'
+        },
+        yAxis: [{
+            name: '交易数量',
+            type: 'value',
+            minInterval: 1,
+            scale: true,
+            boundaryGap: ['10%', '10%'],
+            splitLine: {
+                show: false
+            }
+        }, {
+            name: '新增交易数',
+            type: 'value',
+            minInterval: 1,
+            boundaryGap: [0, '100%'],
+            splitLine: {
+                show: false
+            }
+        }],
+        dataZoom: {
+            start: 0,
+            end: 100
+        },
+        series: [{
+            name: '交易数量',
+            type: 'line',
+            yAxisIndex: 0,
+            zlevel: 1,
+            showSymbol: false,
+            hoverAnimation: false,
+            data: graphData
+        }, {
+            name: '新增交易数',
+            type: 'bar',
+            yAxisIndex: 1,
+            zlevel: 0,
+            showSymbol: false,
+            hoverAnimation: false,
+            data: graphGrowth
+        }]
+    }
+    myChart = echarts.init(document.getElementById("graphContainer"));
+    if (option && typeof option === 'object') {
+        myChart.setOption(option);
+    }
     getChainInfo();
-    table.init('tableTrans', {
-        limit: 1000 //注意：请务必确保 limit 参数（默认：10）是与你服务端限定的数据条数一致
-    });
     //关闭加载页面
     document.getElementsByClassName("loading")[0].classList.add("layui-hide");
 }
@@ -150,29 +228,122 @@ function callbackGetChainInfo(json) {
     document.getElementById("explorerBlockNumber").innerText = json.data.blockNumber;
     document.getElementById("explorerTxSum").innerText = json.data.txSum;
     document.getElementById("explorerNodeCounts").innerText = json.data.nodeCounts;
-    let tabBlock = document.getElementById("tableBlock");
-    tabBlock.innerHTML = "";
-    for (let j = 0; j < 10; j++) {
-        let trBlock = tabBlock.insertRow();
-        trBlock.insertCell(0).innerText = json.data.topBlock[j].date;
-        trBlock.insertCell(1).innerText = json.data.topBlock[j].number;
-        trBlock.insertCell(2).innerText = json.data.topBlock[j].transCounts;
-        trBlock.insertCell(3).innerText = json.data.topBlock[j].hash;
+
+    myChart.resize();
+    let now = new Date(json.time);
+    let nowTime = now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate() + " " + now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
+    if (lastValue == undefined) {
+        let startTime = now.getTime() - 600000;
+        let txSumTemp = json.data.txSum;
+        let timeTemp = startTime;
+        for (let i = 0; i < 120; i++) {
+            timeTemp += 5000;
+            let nowTemp = new Date(timeTemp);
+            let nowTimeTemp = nowTemp.getFullYear() + '-' + (nowTemp.getMonth() + 1) + '-' + nowTemp.getDate() + " " + nowTemp.getHours() + ':' + nowTemp.getMinutes() + ':' + nowTemp.getSeconds();
+            graphData.push({
+                name: nowTimeTemp,
+                value: [
+                    nowTimeTemp,
+                    null
+                ]
+            });
+            graphGrowth.push({
+                name: nowTimeTemp,
+                value: [
+                    nowTimeTemp,
+                    null
+                ]
+            });
+        }
+        lastValue = json.data.txSum;
     }
-    // table.init('tableBlock', {});
-    let tabTrans = document.getElementById("tableTrans");
-    tabTrans.innerHTML = "";
-    console.log(json.data.topTrans.length);
-    for (let j = 0; j < json.data.topTrans.length; j++) {
-        let trTrans = tabTrans.insertRow();
-        trTrans.insertCell(0).innerText = json.data.topTrans[j].date;
-        trTrans.insertCell(1).innerText = json.data.topTrans[j].from;
-        trTrans.insertCell(2).innerText = json.data.topTrans[j].to;
-        trTrans.insertCell(3).innerText = json.data.topTrans[j].hash;
-    }
-    table.init('tableTrans', {
-        limit: 1000 //注意：请务必确保 limit 参数（默认：10）是与你服务端限定的数据条数一致
+    graphData.shift();
+    graphData.push({
+        name: nowTime,
+        value: [
+            nowTime,
+            json.data.txSum
+        ]
     });
+    graphGrowth.shift();
+    graphGrowth.push({
+        name: nowTime,
+        value: [
+            nowTime,
+            json.data.txSum - lastValue
+        ]
+    });
+    myChart.setOption({
+        series: [{
+            data: graphData
+        }, {
+            data: graphGrowth
+        }]
+    });
+    lastValue = json.data.txSum;
+
+    let blockDeleteCount;
+    let txDeleteCount;
+    if (listBlockDeleteCount.length >= 60) {
+        blockDeleteCount = listBlockDeleteCount.shift();
+        txDeleteCount = listTxDeleteCount.shift();
+        if ($("#chainBlockList li").length > 10) {
+            for (let i = 0; i < blockDeleteCount; i++)
+                $("#chainBlockList li:last").remove();
+            for (let i = 0; i < txDeleteCount; i++)
+                $("#chainTxList li:last").remove();
+        }
+    }
+    listBlockDeleteCount.push(json.data.topBlock.length);
+    listTxDeleteCount.push(json.data.topTrans.length);
+
+    let chainBlockList = $("#chainBlockList");
+    for (let i = json.data.topBlock.length - 1, j = 0; j < json.data.topBlock.length; i--, j++) {
+        let chainBlockItem = document.createElement("li");
+        let dateTop = new Date(json.data.topBlock[i].date);
+        let chainBlockItemTime = dateTop.getFullYear() + '.' + (dateTop.getMonth() + 1) + '.' + dateTop.getDate() + " " + dateTop.getHours() + ':' + dateTop.getMinutes() + ':' + dateTop.getSeconds();
+        chainBlockItem.innerHTML = '<div class="blockItemBox">\n' +
+            '    <div class="blockItemBoxRowOne">\n' +
+            '        <p class="blockItemNumber">区块 ' + json.data.topBlock[i].number + '</p>\n' +
+            '    </div>\n' +
+            '    <div class="blockItemBoxRowTwo">\n' +
+            '        <p class="blockItemTime">' + chainBlockItemTime + '</p>\n' +
+            '        <p class="blockItemTxCount">' + json.data.topBlock[i].transCounts + ' Txns</p>\n' +
+            '    </div>\n' +
+            '</div>';
+        chainBlockList.prepend(chainBlockItem);
+    }
+
+    let chainTxList = $("#chainTxList");
+    for (let i = json.data.topTrans.length - 1, j = 0; j < json.data.topTrans.length; i--, j++) {
+        let chainTxItem = document.createElement("li");
+        let dateTop = new Date(json.data.topTrans[i].date);
+        let chainTxItemTime = dateTop.getFullYear() + '.' + (dateTop.getMonth() + 1) + '.' + dateTop.getDate() + " " + dateTop.getHours() + ':' + dateTop.getMinutes() + ':' + dateTop.getSeconds();
+        chainTxItem.innerHTML = '<table class="TxItemBox">\n' +
+            '    <colgroup>\n' +
+            '        <col width="35">\n' +
+            '        <col width="110">\n' +
+            '        <col>\n' +
+            '        <col width="30">\n' +
+            '        <col>\n' +
+            '        <col width="145">\n' +
+            '    </colgroup>\n' +
+            '    <tbody>\n' +
+            '    <tr>\n' +
+            '        <td>交易</td>\n' +
+            '        <td colspan="4">' + json.data.topTrans[i].hash + '</td>\n' +
+            '        <td class="tdRight">' + chainTxItemTime + '</td>\n' +
+            '    </tr>\n' +
+            '    <tr>\n' +
+            '        <td colspan="3">' + json.data.topTrans[i].from + '</td>\n' +
+            '        <td class="tdCenter"><i class="layui-icon layui-icon-triangle-r"></i></td>\n' +
+            '        <td class="tdRight" colspan="2">' + json.data.topTrans[i].to + '</td>\n' +
+            '    </tr>\n' +
+            '    </tbody>\n' +
+            '</table>\n' +
+            '<hr>'
+        chainTxList.prepend(chainTxItem);
+    }
 }
 
 //获取账户信息
@@ -568,6 +739,19 @@ function switchPage(thisObj) {
     document.getElementById(tabShowNow).classList.remove("layui-show");
     tabShowNow = thisObj.attributes.getNamedItem("tabId").value;
     document.getElementById(tabShowNow).classList.add("layui-show");
+    if (tabShowNow == "tenderBidExplorer") {
+        table.init('tableTrans', {
+            limit: 1000 //注意：请务必确保 limit 参数（默认：10）是与你服务端限定的数据条数一致
+        });
+        myChart.setOption({
+            series: [{
+                data: graphData
+            }, {
+                data: graphGrowth
+            }]
+        });
+        myChart.resize();
+    }
 }
 
 //发布标的

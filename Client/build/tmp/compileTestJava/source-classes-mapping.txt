@@ -89,13 +89,13 @@ org/sBid/Register.java
  org.sBid.Register
 org/sBid/Files.java
  org.sBid.Files
-org/sBid/AmopResponseCB.java
- org.sBid.AmopResponseCB
+org/sBid/SBidBC.java
+ org.sBid.SBidBC
 org/sBid/Account.java
  org.sBid.Account
 org/sBid/Communicate.java
  org.sBid.Communicate
-org/sBid/SBidBC.java
- org.sBid.SBidBC
+org/sBid/AmopResponseCB.java
+ org.sBid.AmopResponseCB
 org/sBid/MaskBidServer.java
  org.sBid.MaskBidServer

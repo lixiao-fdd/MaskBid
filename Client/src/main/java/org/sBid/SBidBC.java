@@ -13,12 +13,13 @@ import org.springframework.util.StopWatch;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-
 
 public class SBidBC {
     private String accountName;
@@ -51,6 +52,7 @@ public class SBidBC {
     private String bidBidCode;
     private JSONObject storeJson = null;
     private final SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
+    private BigInteger topBlock = new BigInteger("0");
 
     //旧 构造函数
     public SBidBC(String accountName) {
@@ -97,14 +99,20 @@ public class SBidBC {
             String jsonFilePath = account.getFilesPath() + "store.txt";
             File jsonFile = new File(jsonFilePath);
             if (!jsonFile.exists()) {
-                //todo:将招标方名称，标的编号，加密私钥四个值，利用账号私钥作为密钥进行AES加密，然后存到本账号的存储账本中，条目名称为私钥的哈希
+                //将招标方名称，标的编号，加密私钥四个值，利用账号私钥作为密钥进行AES加密，然后存到本账号的存储账本中，条目名称为私钥的哈希
                 String Table_BidderFile_Name = "Bidder_" + Global.sha1(account.getPk());
                 String storeFileName = Global.sha1(account.getSk());
                 Files files = new Files(contract, Table_BidderFile_Name, "");
                 if (files.read(storeFileName)) {
-                    //todo: 解密
-//                    Global.writeFile(jsonFilePath, files.getFile_content());
-                    storeJson = JSON.parseObject(files.getFile_content());
+                    //aes解密
+                    String decrypted = null;
+                    try {
+                        decrypted = Global.decrypt(account.getSk(), files.getFile_content());
+                    } catch (GeneralSecurityException e) {
+                        e.printStackTrace();
+                    }
+                    storeJson = JSON.parseObject(decrypted);
+                    System.out.println(storeJson);
                 }
             }
         }
@@ -837,7 +845,13 @@ public class SBidBC {
         String storeFileName = Global.sha1(account.getSk());
         String storeFilePath = account.getFilesPath() + storeFileName;
         //todo:加密
-        Global.writeFile(storeFilePath, storeJson.toJSONString());
+        String hexStr = null;
+        try {
+            hexStr = Global.encrypt(account.getSk(), storeJson.toJSONString());
+        } catch (GeneralSecurityException e) {
+            e.printStackTrace();
+        }
+        Global.writeFile(storeFilePath, hexStr);
         //上传
         Files files = new Files(contract, Table_BidderFile_Name, account.getFilesPath());
         files.delete(storeFileName);
@@ -1044,12 +1058,15 @@ public class SBidBC {
         json.put("failedTxSum", Integer.parseInt(failedTxSum.substring(2), 16));
         // 获取节点数量
         json.put("nodeCounts", client.getPeers().getPeers().size() + 1);
-
-        // 获取顶部十个区块
-//        ArrayList<BcosBlock.Block> blockList = new ArrayList<>();
+        // 获取顶部新产生的区块
         ArrayList<JSONObject> blockList = new ArrayList<>();
         ArrayList<JSONObject> transList = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
+        int newBlockCount;
+        if (topBlock.compareTo(new BigInteger("0")) == 0)
+            newBlockCount = 10;
+        else
+            newBlockCount = blockNumber.subtract(topBlock).intValue();
+        for (int i = 0; i < newBlockCount; i++) {
             JSONObject jsonItem = new JSONObject();
             //区块
             BcosBlock.Block blockItem = client.getBlockByNumber(blockNumber.subtract(BigInteger.valueOf(i)), true).getBlock();
@@ -1083,10 +1100,10 @@ public class SBidBC {
             }
             blockList.add(jsonItem);
         }
+
         json.put("topTrans", transList);
         json.put("topBlock", blockList);
-
-
+        topBlock = blockNumber;
     }
 
     //旧 读取注册表
