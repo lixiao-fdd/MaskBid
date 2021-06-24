@@ -1,7 +1,6 @@
 .gradle
 **/build/
 !src/**/build/
-build/
 
 # Ignore Gradle GUI config
 gradle-app.setting
@@ -11,3 +10,4 @@ gradle-app.setting
 
 # Cache of project
 .gradletasknamecache
+/build/
