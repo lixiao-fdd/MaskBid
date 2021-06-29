@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import "./Table.sol";
 
-contract sBid {
+contract MaskBid {
     event InsertTableTenderResult(int256 count);
     event UpdateTableTenderResult(int256 count);
     event RemoveTableTenderResult(int256 count);
