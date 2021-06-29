@@ -52,29 +52,20 @@
             <!-- 区块链设置 -->
             <form class="layui-form layui-form-pane" action="">
                 <div class="layui-form-item">
-                    <label class="layui-form-label">节点地址</label>
-                    <div class="layui-input-block">
-                        <input type="text" name="nodeAddress" required lay-verify="required" value="127.0.0.1"
-                               autocomplete="off"
-                               class="layui-input">
-                    </div>
-                </div>
-                <div class="layui-form-item">
                     <label class="layui-form-label">合约地址</label>
                     <div class="layui-input-block">
                         <input type="text" name="contractAddress" required lay-verify="required"
-                               value="0x4a3234be1003513b8c1765bc283f3740efd8f9de" autocomplete="off"
-                               class="layui-input">
+                               value="" autocomplete="off"
+                               class="layui-input" id="loginSettingContractAddress">
                     </div>
                 </div>
                 <div class="layui-form-item">
                     <label class="layui-form-label">主表地址</label>
                     <div class="layui-input-block">
-                        <input type="text" name="tableAddress" required lay-verify="required" value="dGVuZGVyVGVzdDMw"
-                               autocomplete="off" class="layui-input">
+                        <input type="text" name="tableAddress" required lay-verify="required" value=""
+                               autocomplete="off" class="layui-input" id="loginSettingTableName">
                     </div>
                 </div>
-
                 <div class="layui-form-item loginSettingPostButton">
                     <div class="layui-input-block">
                         <button class="layui-btn" lay-submit lay-filter="loginSetting">修改</button>
@@ -105,6 +96,12 @@
                 window.location.replace("./tender.html");
             else
                 window.location.replace("./bidder.html");
+        } else {
+            document.getElementById("loginSettingContractAddress").value = json.data.contractAddress;
+            document.getElementById("loginSettingTableName").value = json.data.mainTableName;
+            if(json.data.contractAddress==""||json.data.mainTableName==""){
+                openSetting();
+            }
         }
     }
 
@@ -207,10 +204,31 @@
         });
         var form = layui.form;
         form.on('submit(loginSetting)', function (data) {
-            console.log(data.field);
-            layer.close(index);
-            return false;
+            layer.open({
+                title: '警告'
+                , content: '随意修改可能导致未知错误，是否确认修改？'
+                , btn: ['确认', '返回']
+                , yes: function (indexs, layero) {
+                    let jsonData = {
+                        "act": "loginSetting",
+                        "data": {
+                            "contractAddress": data.field.contractAddress,
+                            "mainTableName": data.field.tableAddress
+                        }
+                    };
+                    sendJson(jsonData, callbackLoginSetting);
+                    layer.close(indexs);
+                    layer.close(index);
+                    layer.load(2);
+                }
+            });
+            return false; //阻止表单跳转
         });
+    }
+
+    function callbackLoginSetting(json) {
+        console.log(json);
+        layer.closeAll('loading');
     }
 </script>
 </body>

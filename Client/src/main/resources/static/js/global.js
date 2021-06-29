@@ -27,7 +27,9 @@ function sendJson(jsonData, functionName) {
             functionName(dat);
         },
         error: function (e) {
+            layer.closeAll('loading');
             console.log("ERROR: ", e);
+            alert("错误，代码：："+e.status);
         }
     });
 }
@@ -163,8 +165,7 @@ function tenderStarter() {
         xAxis: {
             type: 'time',
             splitLine: {
-                show: true
-            },
+                show: true},
             formatter: '{HH}:{mm}:{ss}'
         },
         yAxis: [{
