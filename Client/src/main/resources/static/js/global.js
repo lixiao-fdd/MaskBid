@@ -29,7 +29,7 @@ function sendJson(jsonData, functionName) {
         error: function (e) {
             layer.closeAll('loading');
             console.log("ERROR: ", e);
-            // alert("错误，代码：："+e.status);
+            alert("错误，代码：："+e.status);
         }
     });
 }

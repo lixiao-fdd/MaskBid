@@ -750,12 +750,10 @@ public class SBidBC {
         ArrayList<JSONObject> transList = new ArrayList<>();
         int blockCount = blockNumber.intValue();
         int newBlockCount;
-        if (topBlock.compareTo(new BigInteger("0")) == 0)
+        if (topBlock.compareTo(new BigInteger("0")) == 0 && blockCount > 10) {
             newBlockCount = 10;
-        else
+        } else
             newBlockCount = blockNumber.subtract(topBlock).intValue();
-        if (blockCount < 10)
-            newBlockCount = blockCount;
         for (int i = 0; i < newBlockCount; i++) {
             JSONObject jsonItem = new JSONObject();
             //区块
