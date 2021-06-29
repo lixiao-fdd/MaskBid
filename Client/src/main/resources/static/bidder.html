@@ -20,6 +20,7 @@
                 <a id="mainTitleAccountName"></a>
                 <dl class="layui-nav-child">
                     <dd><a onclick="openAccountInfoLayer()">账户信息</a></dd>
+                    <dd><a onclick="openReadme()">系统介绍</a></dd>
                     <dd><a onclick="logout()">退出登录</a></dd>
                 </dl>
             </li>
@@ -340,6 +341,15 @@
                     </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+    <!-- 帮助页弹出框 -->
+    <div id="readmeBox" class="bidDetailBox">
+        <div class="layui-card">
+            <div class="layui-card-header layerMove">系统介绍</div>
+            <div class="layui-card-body">
+                <iframe name="readme" class="readmeBox" src="./readme.html"></iframe>
             </div>
         </div>
     </div>

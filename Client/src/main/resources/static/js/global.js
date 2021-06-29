@@ -29,7 +29,7 @@ function sendJson(jsonData, functionName) {
         error: function (e) {
             layer.closeAll('loading');
             console.log("ERROR: ", e);
-            alert("错误，代码：："+e.status);
+            // alert("错误，代码：："+e.status);
         }
     });
 }
@@ -981,5 +981,17 @@ function openAccountInfoLayer() {
         , move: '.layerMove'
         , moveOut: true
         , area: '1000px'
+    });
+}
+
+//打开帮助页
+function openReadme(){
+    layer.open({
+        type: 1
+        , title: false
+        , content: $('#readmeBox')
+        , move: '.layerMove'
+        , moveOut: true
+        , area: ['1500px', '800px']
     });
 }

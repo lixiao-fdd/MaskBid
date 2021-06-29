@@ -557,15 +557,23 @@ textarea#auditLog::-webkit-scrollbar-corner {
     text-overflow: ellipsis;
     overflow: hidden;
 }
-.tdCenter{
+
+.tdCenter {
     text-align: center;
 }
-.tdRight{
+
+.tdRight {
     text-align: right;
 }
+
 .logo {
     height: 35px;
     position: relative;
     top: -2px;
     left: -10px;
+}
+
+.readmeBox {
+    width: 100%;
+    height: 730px;
 }
