@@ -364,7 +364,6 @@ public class MaskBidServer {
             }
             //退出登录，（无输入）（无输出）
             case "logout" -> {
-                //todo 判断是否还有等待中的投标
                 createDone = false;
                 if (bidManagerThread != null) {
                     bidManagerThread.interrupt();

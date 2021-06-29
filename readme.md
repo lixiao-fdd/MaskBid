@@ -103,7 +103,7 @@ services:
 
 ![初次运行](https://cdn.jsdelivr.net/gh/qiuqingyun/MaskBid@master/Img/登录页初次运行.png)
 
-> 合约地址形如`0x2bb5a1058eb68051ca8849cad2d9cde3ce55f0d3`，主表地址默认为`MaskBid`。
+> 合约地址形如`0x2bb5a1058eb68051ca8849cad2d9cde3ce55f0d3`，主表地址形如`MaskBid`。
 
 填写完毕后点击修改，保存设置。
 
