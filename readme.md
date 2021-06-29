@@ -15,13 +15,13 @@ git clone https://github.com/qiuqingyun/MaskBid.git
 部署合约时，在区块链控制台中执行：
 
 ```bash
-[group:1]> deploy MaskBid ${main_table_addr}
+[group:1]> deploy MaskBid MaskBid_Reg
 transaction hash: 0xbb43d6ef4e9b66310c34bba1de542ea265d474a2fd5893c0767a923bbf139b77
 contract address: 0x2bb5a1058eb68051ca8849cad2d9cde3ce55f0d3
 currentAccount: 0xe7e46d5e4ae6696251f76c58aa662c51d67e7585
 ```
 
-其中`${main_table_addr}`为主表地址。部署完成后控制台会返回包括合约地址`contract address`在内的多个值。在首次进入系统时，需要填入主表地址`${main_table_addr}`与合约地址`contract address`，因此这两个值应妥善保管。
+其中`MaskBid_Reg`为主表地址，此项可自定义。部署完成后控制台会返回包括合约地址`contract address`在内的多个值。在首次进入系统时，需要填入主表地址`MaskBid_Reg`与合约地址`contract address`，因此这两个值应妥善保管。
 
 至此智能合约部署完成。
 
@@ -103,7 +103,7 @@ services:
 
 ![初次运行](https://cdn.jsdelivr.net/gh/qiuqingyun/MaskBid@master/Img/登录页初次运行.png)
 
-> 合约地址形如`0x2bb5a1058eb68051ca8849cad2d9cde3ce55f0d3`，主表地址形如`MaskBid`。
+> 合约地址形如`0x2bb5a1058eb68051ca8849cad2d9cde3ce55f0d3`，主表地址形如`MaskBid_Reg`。
 
 填写完毕后点击修改，保存设置。
 
