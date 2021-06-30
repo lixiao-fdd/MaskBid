@@ -42,14 +42,14 @@ docker pull qing98/maskbid:latest
 ```bash
 docker container run --rm \
     --name MaskBid \
-    -p ${bind_ip}:8080 \
+    -p ${server_port}:8080 \
     -v ${dir_conf}:/app/conf \
     -d qing98/maskbid:latest
 ```
 
 #### 参数
 
-* `bind_ip` - 用于访问服务的端口
+* `server_port` - 用于访问服务的端口
 * `dir_conf` - 存放SDK证书以及配置文件`sdkConfig.toml`的文件夹的路径
 
 > 注意：配置文件需命名为`sdkConfig.toml`，否则无法读取。
